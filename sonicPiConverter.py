@@ -11,6 +11,19 @@ def generatePlayChord(base_note, chord_type, inversion=0):
     return '\n'.join([f'play {note}' for note in get_chord(base_note, chord_type, inversion)])
 
 
+def generatePlayChordProg(chords, sleep=1):
+    return f'\nsleep {sleep}\n'.join([generatePlayChord(x[0], x[1], x[2]) for x in chords]) + f'\nsleep {sleep}'
+
+
+def generatePlayChordProgOnPattern(chords, sleep_pattern):
+    s = ""
+    for ch in chords:
+        for pt in sleep_pattern:
+            s = s + generatePlayChord(ch[0], ch[1], ch[2]) + f"\nsleep {pt}\n"
+
+    return s
+
+
 def generatePlayArp(base_note, chord_type, inversion=0, speed=1.0):
     chord = np.array(get_chord(base_note, chord_type, inversion))
     np.random.shuffle(chord)
@@ -27,7 +40,6 @@ def generateRandSpeedVariation(seq, speed=1.0, len=8, subdivisions=None):
         subdivisions = [1]
     return '\n'.join(
         f'{generatePlayNote(random.choice(seq))}\nsleep {speed / (random.choice(subdivisions))}' for _ in range(len))
-
 
 #
 # print(generatePlayChord('C5' , 'major_seventh'))
@@ -107,14 +119,14 @@ def generateRandSpeedVariation(seq, speed=1.0, len=8, subdivisions=None):
 # print('sleep 2')
 
 
-print(generatePlayArp('D6', 'major_ninth', speed=0.25))
-print(generatePlayArp('D6', 'major_ninth', speed=0.25))
-
-print(generatePlayArp('A5', 'minor_eleventh',2, speed=0.25))
-print(generatePlayArp('A5', 'minor_eleventh',2, speed=0.25))
-
-print(generatePlayArp('E5', 'minor_seventh_sharp_five',2, speed=0.25))
-print(generatePlayArp('E5', 'minor_seventh_sharp_five',2, speed=0.25))
-
-print(generatePlayArp('G6', 'major_sixth', speed=0.25))
-print(generatePlayArp('G6', 'major_sixth', speed=0.25))
+# print(generatePlayArp('D6', 'major_ninth', speed=0.25))
+# print(generatePlayArp('D6', 'major_ninth', speed=0.25))
+#
+# print(generatePlayArp('A5', 'minor_eleventh',2, speed=0.25))
+# print(generatePlayArp('A5', 'minor_eleventh',2, speed=0.25))
+#
+# print(generatePlayArp('E5', 'minor_seventh_sharp_five',2, speed=0.25))
+# print(generatePlayArp('E5', 'minor_seventh_sharp_five',2, speed=0.25))
+#
+# print(generatePlayArp('G6', 'major_sixth', speed=0.25))
+# print(generatePlayArp('G6', 'major_sixth', speed=0.25))

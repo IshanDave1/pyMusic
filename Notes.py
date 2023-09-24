@@ -49,6 +49,7 @@ chords = {
     'sus4': ['unison', 'perfect_fourth', 'perfect_fifth'],
     'major_seventh': ['unison', 'major_third', 'perfect_fifth', 'major_seventh'],
     'minor_seventh': ['unison', 'minor_third', 'perfect_fifth', 'minor_seventh'],
+    'minor_major_seventh': ['unison', 'minor_third', 'perfect_fifth', 'major_seventh'],
     'dominant_seventh': ['unison', 'major_third', 'perfect_fifth', 'minor_seventh'],
     'diminished_seventh': ['unison', 'minor_third', 'tritone', 'major_sixth'],
     'half_diminished_seventh': ['unison', 'minor_third', 'tritone', 'minor_seventh'],
@@ -79,7 +80,8 @@ chords = {
 
 def get_num(note: str) -> int:
     if not (note[-1].isdigit() and note[:-1] in notes):
-        raise ValueError("The note can only be A-G , only C,D,F,G,A can be flat and the octave has to be a number")
+        raise ValueError(
+            f"note {note[-1]} The note can only be A-G , only C,D,F,G,A can be flat and the octave has to be a number")
     return notes.index(note[:-1]) + int(note[-1]) * 12
 
 
@@ -111,9 +113,9 @@ def get_scale_notes(num: Union[int, str], scale_type: str) -> List[str]:
     return [get_note(n) for n in get_scale_num(num, scale_type)]
 
 
-def get_chord(base_note: Union[int, str], chord_type, inversion=0):
+def get_chord(base_note: Union[int, str], chord_type, inversion=0, open=True):
     if chord_type not in chords.keys():
-        raise ValueError(f"not supported scale {chord_type}")
+        raise ValueError(f"not supported chord {chord_type}")
     if inversion > 0:
         base_part = get_chord(base_note, chord_type)[inversion:]
         transposed_part = get_chord(get_transpose_num(base_note), chord_type)[:inversion]
