@@ -38,17 +38,17 @@ class TestMusicTheory(unittest.TestCase):
             get_scale_notes(72, 'invalid_scale')  # Invalid scale, should raise ValueError
 
     def test_get_chord(self):
-        self.assertEqual(get_chord(30, 'major'), [30, 34, 37])
-        self.assertEqual(get_chord(36, 'minor'), [36, 39, 43])
+        self.assertEqual(get_chord(30, 'major' , lo_double_notes=[0]), [18,30, 34, 37])
+        self.assertEqual(get_chord(36, 'minor',2), [43,48,51])
         self.assertEqual(get_chord(55, 'dominant_seventh', 3), [65, 67, 71, 74])
         self.assertEqual(get_chord(50, 'augmented'), [50, 54, 58])
         self.assertEqual(get_chord(53, 'diminished'), [53, 56, 59])
-        self.assertEqual(get_chord(52, 'sus4'), [52, 57, 59])
+        self.assertEqual(get_chord(52, 'sus4',1,uo_double_notes=[2]), [57, 59, 64, 71])
         self.assertEqual(get_chord(57, 'major_seventh'), [57, 61, 64, 68])
         self.assertEqual(get_chord(59, 'minor_seventh'), [59, 62, 66, 69])
-        self.assertEqual(get_chord(48, 'major_ninth', 2), [55, 59, 62, 60, 64])
+        self.assertEqual(get_chord(48, 'major_ninth', 2), [55, 59, 60, 62, 64])
         self.assertEqual(get_chord(74, 'dominant_thirteenth'), [74, 78, 81, 84, 88, 97])
-        self.assertEqual(get_chord(74, 'dominant_thirteenth', 3), [84, 88, 97, 86, 90, 93])
+        self.assertEqual(get_chord(74, 'dominant_thirteenth', 3), [84, 86, 88, 90, 93, 97])
         self.assertEqual(get_chord(77, 'sus9'), [77, 79, 84, 91])
         self.assertEqual(get_chord(79, '6/9'), [79, 81, 83, 86, 88, 93])
 

@@ -1,3 +1,5 @@
+import time
+
 from Notes import *
 import random
 import numpy as np
@@ -7,8 +9,9 @@ def generatePlayNote(note):
     return f'play {note if str(note).isdigit else get_num(note)}'
 
 
-def generatePlayChord(base_note, chord_type, inversion=0):
-    return '\n'.join([f'play {note}' for note in get_chord(base_note, chord_type, inversion)])
+def generatePlayChord(base_note, chord_type, inversion=0, lo_double_notes=None, uo_double_notes=None, ):
+    return '\n'.join(
+        [f'play {note}' for note in get_chord(base_note, chord_type, inversion, lo_double_notes, uo_double_notes)])
 
 
 def generatePlayChordProg(chords, sleep=1):
@@ -19,7 +22,7 @@ def generatePlayChordProgOnPattern(chords, sleep_pattern):
     s = ""
     for ch in chords:
         for pt in sleep_pattern:
-            s = s + generatePlayChord(ch[0], ch[1], ch[2]) + f"\nsleep {pt}\n"
+            s = s + generatePlayChord(ch[0], ch[1], ch[2], ch[3]) + f"\nsleep {pt}\n"
 
     return s
 
@@ -36,10 +39,20 @@ def generateRand(seq, speed=1.0, len=8):
 
 
 def generateRandSpeedVariation(seq, speed=1.0, len=8, subdivisions=None):
+    seed_value = int(time.time())
+    random.seed(seed_value)
     if subdivisions is None:
         subdivisions = [1]
     return '\n'.join(
         f'{generatePlayNote(random.choice(seq))}\nsleep {speed / (random.choice(subdivisions))}' for _ in range(len))
+
+
+def playDrumBeat(sample, subdivisions):
+    s = ""
+    for pt in subdivisions:
+        s = f"{s}sample {sample}" + f"\nsleep {pt}\n"
+
+    return s
 
 #
 # print(generatePlayChord('C5' , 'major_seventh'))

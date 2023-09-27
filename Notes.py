@@ -1,3 +1,4 @@
+import statistics
 from typing import List, Union
 
 notes = ["C", "Cs", "D", "Ds", "E", "F", "Fs", "G", "Gs", "A", "As", "B"]
@@ -86,6 +87,10 @@ def get_num(note: str) -> int:
 
 
 def get_note(num: int) -> str:
+    if num <= 0 or num >= 100:
+        raise ValueError(
+            f"num {num} has to be in range 0-100"
+        )
     return f"{notes[num % 12]}{num // 12}"
 
 
@@ -113,18 +118,52 @@ def get_scale_notes(num: Union[int, str], scale_type: str) -> List[str]:
     return [get_note(n) for n in get_scale_num(num, scale_type)]
 
 
-def get_chord(base_note: Union[int, str], chord_type, inversion=0, open=True):
+def get_chord(base_note: Union[int, str], chord_type, inversion=0, lo_double_notes=None, uo_double_notes=None,
+              open=True):
     if chord_type not in chords.keys():
         raise ValueError(f"not supported chord {chord_type}")
-    if inversion > 0:
-        base_part = get_chord(base_note, chord_type)[inversion:]
-        transposed_part = get_chord(get_transpose_num(base_note), chord_type)[:inversion]
-        base_part.extend(transposed_part)
-        return base_part
-
     if type(base_note) == str:
         base_note = get_num(base_note)
-    return [base_note + interval_half_steps[ele] for ele in chords[chord_type]]
+
+    if lo_double_notes is None:
+        lo_double_notes = []
+    if uo_double_notes is None:
+        uo_double_notes = []
+    root_position = [base_note + interval_half_steps[ele] for ele in chords[chord_type]]
+    lo_notes = [get_transpose_num(root_position[index], -1) for index in lo_double_notes]
+    uo_notes = [get_transpose_num(root_position[index]) for index in uo_double_notes]
+    base_part = root_position[inversion:]
+    transposed_part = [get_transpose_num(note) for note in root_position][:inversion]
+    base_part.extend(transposed_part)
+    base_part.extend(lo_notes)
+    base_part.extend(uo_notes)
+
+    return sorted(base_part)
+
+
+def get_inversion(chord, octaves):
+    chord_in_octaves = [[note + 12 * octave for octave in range(octaves)] for note in chord]
+
+    def helper(lol):
+        if len(lol) == 1:
+            return [[x] for x in lol[0]]
+        lol_sub = helper(lol[:-1])
+        return [l + [ele] for l in lol_sub for ele in lol[-1]]
+
+    inv = helper(chord_in_octaves)
+
+    return sorted([sorted(ch) for ch in inv], key=lambda x: statistics.stdev([ele - x[0] for ele in x]))
+
+
+def isSameChord(c1, c2):
+    return sorted([x % 12 for x in c1]) == sorted([x % 12 for x in c2])
+
+
+print(get_inversion([0, 4, 7], 4))
+x = get_inversion([0, 4, 7], 3)
+print([isSameChord(x[i], x[i + 1]) for i in range(len(x) - 1)])
+
+print(isSameChord([0, 4, 7], [0, 7, 4]))
 
 
 def get_mean_chord_distance(base_note: Union[int, str], chord_type, base_note2: Union[int, str], chord_type2,
