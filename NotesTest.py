@@ -1,5 +1,5 @@
 import unittest
-from typing import List, Tuple, Union
+
 from Notes import *
 
 
@@ -38,19 +38,34 @@ class TestMusicTheory(unittest.TestCase):
             get_scale_notes(72, 'invalid_scale')  # Invalid scale, should raise ValueError
 
     def test_get_chord(self):
-        self.assertEqual(get_chord(30, 'major' , lo_double_notes=[0]), [18,30, 34, 37])
-        self.assertEqual(get_chord(36, 'minor',2), [43,48,51])
-        self.assertEqual(get_chord(55, 'dominant_seventh', 3), [65, 67, 71, 74])
-        self.assertEqual(get_chord(50, 'augmented'), [50, 54, 58])
-        self.assertEqual(get_chord(53, 'diminished'), [53, 56, 59])
-        self.assertEqual(get_chord(52, 'sus4',1,uo_double_notes=[2]), [57, 59, 64, 71])
-        self.assertEqual(get_chord(57, 'major_seventh'), [57, 61, 64, 68])
-        self.assertEqual(get_chord(59, 'minor_seventh'), [59, 62, 66, 69])
-        self.assertEqual(get_chord(48, 'major_ninth', 2), [55, 59, 60, 62, 64])
+        #major 0,4,7
+        with self.assertRaises(ValueError):
+            get_chord('Z0', 'major')
+        with self.assertRaises(ValueError):
+            get_chord('Z0', 'major')
+        self.assertEqual(get_chord(30, 'major'), [30, 34, 37]) #major chord
+        self.assertEqual(get_chord(30, 'major' , inversion=1), [34, 37 , 30 + 12]) #major chord 1st inversion
+        self.assertEqual(get_chord(30, 'major' , inversion=2), [ 37, 30 + 12 , 34 + 12]) #major chord 2nd inversion
+        self.assertEqual(get_chord(30, 'major' , lo_double_notes=[0]), [30-12, 30, 34, 37]) #major chord with the root note in lower octave
+        self.assertEqual(get_chord(30, 'major' , uo_double_notes=[2]), [30, 34, 37,37+12]) #major chord with the root note in lower octave
+
+        #minor 7th -> 4 notes 0,3,7,10 :
+        self.assertEqual(get_chord(30, 'minor_seventh'), [30, 33, 37,40]) #minor_seventh chord
+        self.assertEqual(get_chord(30, 'minor_seventh' , inversion=1), [33, 37,40 , 30 + 12]) #minor_seventh chord 1st inversion
+        self.assertEqual(get_chord(30, 'minor_seventh' , inversion=2), [37,40 , 30 + 12, 33 + 12]) #minor_seventh chord 2nd inversion
+        self.assertEqual(get_chord(30, 'minor_seventh' , inversion=3), [40 , 30 + 12, 33 + 12,37 + 12]) #minor_seventh chord 3rd inversion
+        self.assertEqual(get_chord(30, 'minor_seventh' , lo_double_notes=[0]), [30 - 12,30, 33, 37,40]) #minor_seventh chord with the root note in lower octave
+        self.assertEqual(get_chord(30, 'minor_seventh' , uo_double_notes=[2]), [30, 33, 37,40 , 37 + 12]) #minor_seventh chord with the root note in lower octave
+
         self.assertEqual(get_chord(74, 'dominant_thirteenth'), [74, 78, 81, 84, 88, 97])
-        self.assertEqual(get_chord(74, 'dominant_thirteenth', 3), [84, 86, 88, 90, 93, 97])
-        self.assertEqual(get_chord(77, 'sus9'), [77, 79, 84, 91])
-        self.assertEqual(get_chord(79, '6/9'), [79, 81, 83, 86, 88, 93])
+        self.assertEqual(get_chord(74, 'dominant_thirteenth', 3 , over_octaves=2), sorted([84, 88, 97, 74 + 12, 78 + 12, 81 + 12])) #all chords must be sorted
+
+        self.assertEqual(get_chord(30, 'major' , inversion=2), [ 37, 30 + 12 , 34 + 12]) #major chord 2nd inversion
+        self.assertEqual(get_chord(30, 'major' , inversion=2, over_octaves=1), [ 37, 30 + 12 , 34 + 12]) #major chord 2nd inversion
+        self.assertEqual(get_chord(36, 'minor', 2, over_octaves=2), [43, 60, 63])
+        self.assertEqual(get_chord(36, 'minor', over_octaves=3), [36, 39, 67])
+        self.assertEqual(get_chord(36, 'minor', over_octaves=3, openness=0.599), [36, 63, 67]  )
+        self.assertEqual(get_chord(36, 'minor', over_octaves=3, openness=0.999), [36, 51, 67])
 
     def test_transpose_note(self):
         self.assertEqual(get_transpose_note('C5'), 'C6')
@@ -60,33 +75,58 @@ class TestMusicTheory(unittest.TestCase):
 
     def test_transpose_note(self):
         self.assertEqual(get_transpose_num('C5'), 72)
-        self.assertEqual(get_transpose_num('C5', -1), 48)
-        self.assertEqual(get_transpose_num('C5', 2), 84)
+        self.assertEqual(get_transpose_num('C5', -12), 48)
+        self.assertEqual(get_transpose_num('C5', 24), 84)
         self.assertEqual(get_transpose_num(60), 72)
 
     def test_get_mean_chord_distance(self):
         result = get_mean_chord_distance(60, "major", 67, "minor")
-        self.assertAlmostEqual(result, 6.66, delta=0.1)  # Replace with the expected result
+        self.assertAlmostEqual(result, 6.66, delta=0.1)
         result = get_mean_chord_distance(72, "major", 76, "minor", inversion=1, inversion2=2)
-        self.assertAlmostEqual(result, 7.66 ,  delta=0.1)  # Replace with the expected result
+        self.assertAlmostEqual(result, 7.66, delta=0.1)
 
     def test_get_mean_chord_distance_chord(self):
         result = get_mean_chord_distance_chord([60, 64, 67], [67, 70, 74])
-        self.assertAlmostEqual(result, 6.66, delta=0.1)  # Replace with the expected result
+        self.assertAlmostEqual(result, 6.66, delta=0.1)
         result = get_mean_chord_distance_chord([60, 64], [67, 70, 74])
-        self.assertAlmostEqual(result, 8.33, delta=0.1)  # Replace with the expected result
+        self.assertAlmostEqual(result, 8.33, delta=0.1)
 
     def test_get_closest_inversion(self):
         result = get_closest_inversion(60, "major", 67, "minor", 1)
-        self.assertEqual(result, [67, 70, 74])  # Replace with the expected result
+        self.assertEqual(result, [67, 70, 74])
         result = get_closest_inversion(72, "minor", 76, "major", 2)
-        print(get_note(72))
-        print(get_note(76))
-        print(get_chord(72, "minor",2), sum(get_chord(72, "minor",2))/3)
-        print(get_chord(76, "major" ,0), sum(get_chord(76, "major" ,0))/3)
-        print(get_chord(76, "major" ,1), sum(get_chord(76, "major" ,1))/3)
-        print(get_chord(76, "major" ,2), sum(get_chord(76, "major" ,2))/3)
-        self.assertEqual(result, [80, 83, 88])  # Replace with the expected result
+        self.assertEqual(result, [80, 83, 88])
+
+    def test_get_inversion(self):
+        result = get_inversion([0, 4, 7], 1)
+        expected = [[0, 4, 7]]
+        self.assertEqual(result, expected)
+        result = get_inversion([0, 4, 7], 2)
+        expected = [[0, 16, 19], [4, 12, 19], [0, 4, 19], [0, 7, 16]]
+        self.assertEqual(result, expected)
+        result = get_inversion([0, 4, 7], 3)
+        expected = [[0, 28, 31], [0, 4, 31], [4, 24, 31], [0, 7, 28], [4, 12, 31], [0, 19, 28], [0, 16, 31]]
+
+        self.assertEqual(result, expected)
+
+    def test_is_same_chord(self):
+        self.assertTrue(is_same_chord([60, 64, 67], [60, 67, 64]))  # Same notes, different order
+        self.assertTrue(is_same_chord([60, 64, 67], [60, 67, 64, 72]))  # Same notes, different order and octave
+        self.assertFalse(is_same_chord([60, 64, 67], [60, 64, 68]))  # Different notes
+        self.assertTrue(
+            is_same_chord([60, 64, 67], [60, 64, 67, 72]))  # Different number of notes with only octave variations
+
+    def test_is_same_inversion(self):
+        self.assertTrue(is_same_inversion([60, 64, 67], [60 + 12, 64 - 12, 67]))  # Same notes, different octaves
+        self.assertFalse(is_same_inversion([60, 64, 67], [64, 67, 60]))  # Same notes, different order
+
+    def test_get_taxicab_chord_distance_chord(self):
+        self.assertEqual(16,get_taxicab_chord_distance_chord([60, 64, 67], [60 + 12, 64 - 12, 67]))  #
+        self.assertEqual(0, get_taxicab_chord_distance_chord([2,3,4], [1,2,3,4,5]))  #
+
+    def test_get_taxicab_chord_distance(self):
+        self.assertEqual(0,get_taxicab_chord_distance(60, "major", 60, "major"))  #
+        self.assertEqual(12,get_taxicab_chord_distance(60, "major", 60, "major",inversion2=1))  #
 
 
 if __name__ == '__main__':
