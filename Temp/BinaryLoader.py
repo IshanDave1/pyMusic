@@ -17,7 +17,7 @@ def dict_freq(s):
 
 
 # Specify the binary file path
-binary_file_path = 'C:/Users/win 10/Desktop/Projects/Python/pyMusic/file2.mid'
+binary_file_path = '/Temp/file2.mid'
 
 try:
     # Open the binary file in binary read mode ('rb')

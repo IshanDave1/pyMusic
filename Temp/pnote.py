@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-import Notes
+from MusicTheory import Notes
 
 
 def draw_chord(chord_notes):
@@ -56,5 +56,5 @@ def draw_chord(chord_notes):
 
 
 # Example usage
-chord = Notes.get_chord(40 , 'diminished_seventh') # Cn6, En6, Gn6
+chord = Notes.get_chord(40, 'diminished_seventh') # Cn6, En6, Gn6
 draw_chord(chord)

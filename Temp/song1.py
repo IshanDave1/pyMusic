@@ -1,4 +1,4 @@
-from sonicPiConverter import *
+from Converter.sonicPiConverter import *
 
 chords = [['D4', 'major_seventh', 2, [0],[0,1]],
           ['G4', 'dominant_seventh', 0, [0],[0,1]],
