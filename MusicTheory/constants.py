@@ -14,7 +14,6 @@ scales = {
     'major_pentatonic': [2, 2, 3, 2, 3],
     'major_blues': [2, 1, 1, 3, 2, 3],
     'minor_blues': [3, 2, 1, 1, 3, 2]
-
 }
 
 interval_half_steps = {
@@ -75,3 +74,7 @@ chords = {
     'minor_sixth': ['unison', 'minor_third', 'perfect_fifth', 'major_sixth'],
     'major_sixth': ['unison', 'major_third', 'perfect_fifth', 'major_sixth']
 }
+
+min_note = 0
+max_note = 120
+middle_octave = 5
