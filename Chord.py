@@ -77,6 +77,9 @@ class ScaledChordProgression:
         if chord_types is None:
             chord_types = [[1, 3, 5] for _ in range(len(degrees))]
 
+        # Make a deep copy to avoid mutating the caller's list
+        chord_types = [list(ct) for ct in chord_types]
+
         for chord_type in chord_types:
             for note_index in range(len(chord_type)):
                 chord_type[note_index] = chord_type[note_index] - 1

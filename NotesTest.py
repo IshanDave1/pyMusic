@@ -52,11 +52,6 @@ class TestMusicTheory(unittest.TestCase):
         self.assertEqual(get_chord(77, 'sus9'), [77, 79, 84, 91])
         self.assertEqual(get_chord(79, '6/9'), [79, 81, 83, 86, 88, 93])
 
-    def test_transpose_note(self):
-        self.assertEqual(get_transpose_note('C5'), 'C6')
-        self.assertEqual(get_transpose_note('C5', -1), 'C4')
-        self.assertEqual(get_transpose_note('C5', 2), 'C7')
-        self.assertEqual(get_transpose_note(60), 'C6')
 
     def test_transpose_note(self):
         self.assertEqual(get_transpose_num('C5'), 72)

@@ -6,7 +6,7 @@ from Constants import notes, scales, chords, interval_half_steps
 def get_num(note: str) -> int:
     if not (note[-1].isdigit() and note[:-1] in notes):
         raise ValueError(
-            f"note {note[-1]} The note can only be A-G , only C,D,F,G,A can be flat and the octave has to be a number")
+            f"Invalid note '{note}'. Notes must be A-G (with optional sharp 's' suffix: Cs, Ds, Fs, Gs, As) followed by an octave number.")
     return notes.index(note[:-1]) + int(note[-1]) * 12
 
 def get_chord_from_notes(notes_list: Union[List[int],List[str]]):

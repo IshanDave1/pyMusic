@@ -16,8 +16,8 @@ def dict_freq(s):
     return lis
 
 
-# Specify the binary file path
-binary_file_path = 'C:/Users/win 10/Desktop/Projects/Python/pyMusic/file2.mid'
+# Specify the binary file path (update this to your local MIDI file)
+binary_file_path = 'file2.mid'
 
 try:
     # Open the binary file in binary read mode ('rb')
