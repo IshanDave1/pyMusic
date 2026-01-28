@@ -73,21 +73,16 @@ class ScaledChordProgression:
             >>> # I-IV(1st inv)-vi-V progression with 7th chords
             >>> cp = scp.gp([1, (4, 1), 6, 5], "major", [[1,3,5,7]]*4)
         """
-        print(degrees)
         if chord_types is None:
             chord_types = [[1, 3, 5] for _ in range(len(degrees))]
 
-        # Make a deep copy to avoid mutating the caller's list
         chord_types = [list(ct) for ct in chord_types]
-
         for chord_type in chord_types:
             for note_index in range(len(chord_type)):
                 chord_type[note_index] = chord_type[note_index] - 1
 
         scale_notes = get_scale_num(self.base_note, scale_type)
         scale_notes = scale_notes + [x + 12 for x in scale_notes] + [x + 24 for x in scale_notes]
-        print([get_note(x) for x in scale_notes])
-        print(scale_notes)
 
         cp = []
         for i in range(len(degrees)):
