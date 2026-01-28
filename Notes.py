@@ -9,6 +9,29 @@ def get_num(note: str) -> int:
             f"note {note[-1]} The note can only be A-G , only C,D,F,G,A can be flat and the octave has to be a number")
     return notes.index(note[:-1]) + int(note[-1]) * 12
 
+def get_chord_from_notes(notes_list: Union[List[int],List[str]]):
+    if type(notes_list) == list:
+        if type(notes_list[0]) == str:
+            notes_list = [get_num(x) for x in notes_list]
+    notes_list.sort()
+    print(notes_list)
+    for base_note in [x-12 for x in notes_list]+notes_list:
+        for chord_type,intervals in chords.items():
+            for inversion in range(len(intervals)):
+                if get_chord(base_note, chord_type, inversion=inversion) == notes_list:
+                    if inversion == 0 :
+                        inversion_part = ""
+                    elif inversion == 1 :
+                        inversion_part = "1st  inversion"
+                    elif inversion == 2 :
+                        inversion_part = "2nd  inversion"
+                    elif inversion == 3 :
+                        inversion_part = "3rd  inversion"
+                    else :
+                        inversion_part = f"{inversion}th"
+                    print(f"{get_note(base_note)} {chord_type} {inversion_part}")
+            # print(get_chord(base_note, chord_type, inversion=inversion) )
+
 
 def get_note(num: int) -> str:
     return f"{notes[num % 12]}{num // 12}"
