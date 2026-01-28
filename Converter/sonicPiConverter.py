@@ -7,7 +7,7 @@ from MusicTheory.Notes import *
 
 
 def generatePlayNote(note):
-    return f'play {note if str(note).isdigit else get_num(note)}'
+    return f'play {note if str(note).isdigit() else get_num(note)}'
 
 
 def generatePlayChord(base_note, chord_type, inversion=0, lo_double_notes=None, uo_double_notes=None, octaves=1,
