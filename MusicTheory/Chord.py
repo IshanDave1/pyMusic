@@ -81,34 +81,23 @@ class ScaledChordProgression:
             for note_index in range(len(chord_type)):
                 chord_type[note_index] = chord_type[note_index] - 1
 
-        scale_notes = get_scale_num(self.base_note, scale_type)
-        scale_notes = scale_notes + [x + 12 for x in scale_notes] + [x + 24 for x in scale_notes]
-
         cp = []
         for i in range(len(degrees)):
             degree = degrees[i]
             chord_type = chord_types[i]
             if type(degree) == int:
-                start_note = degree - 1
-                chord = [scale_notes[start_note + x] for x in (chord_type + [y + 7 for y in chord_type])[0:len(chord_type)]]
-                cp.append(chord)
+                degree = (degree,0,scale_type )
             elif type(degree) == tuple and len(degree) == 2:
-                start_note = degree[0] - 1
-                inversion = degree[1]
-                chord = [scale_notes[start_note + x] for x in
-                         (chord_type + [y + 7 for y in chord_type])[inversion:inversion + len(chord_type)]]
-                cp.append(chord)
-            else:
-                start_note = degree[0] - 1
-                inversion = degree[1]
-                mode = degree[2]
-                parallel_scale_notes = get_scale_num(self.base_note, mode)
-                parallel_scale_notes = parallel_scale_notes + [x + 12 for x in parallel_scale_notes] + [x + 24 for x in
-                                                                                                        parallel_scale_notes]
-                chord = [parallel_scale_notes[start_note + x] for x in
-                         (chord_type + [y + 7 for y in chord_type])[inversion:inversion + len(chord_type)]]
-                cp.append(chord)
-            # print(chord)
+                degree = (degree[0], degree[1], scale_type)
+            start_note = degree[0] - 1
+            inversion = degree[1]
+            mode = degree[2]
+            parallel_scale_notes = get_scale_num(self.base_note, mode)
+            parallel_scale_notes = parallel_scale_notes + [x + 12 for x in parallel_scale_notes] + [x + 24 for x in
+                                                                                                    parallel_scale_notes]
+            chord = [parallel_scale_notes[start_note + x] for x in
+                     (chord_type + [y + 7 for y in chord_type])[inversion:inversion + len(chord_type)]]
+            cp.append(chord)
 
         return cp
 
