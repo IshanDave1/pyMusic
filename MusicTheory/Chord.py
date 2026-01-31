@@ -6,7 +6,7 @@ with support for inversions, modal interchange, and custom chord voicings.
 It also includes utilities for arpeggiating chords with custom patterns.
 """
 
-from MusicTheory.Notes import get_scale_num, get_note
+from MusicTheory.Notes import get_scale_num, get_note, _extend_octaves
 
 
 class ScaledChordProgression:
@@ -92,9 +92,7 @@ class ScaledChordProgression:
             start_note = degree[0] - 1
             inversion = degree[1]
             mode = degree[2]
-            parallel_scale_notes = get_scale_num(self.base_note, mode)
-            parallel_scale_notes = parallel_scale_notes + [x + 12 for x in parallel_scale_notes] + [x + 24 for x in
-                                                                                                    parallel_scale_notes]
+            parallel_scale_notes = _extend_octaves(get_scale_num(self.base_note, mode), 3)
             chord = [parallel_scale_notes[start_note + x] for x in
                      (chord_type + [y + 7 for y in chord_type])[inversion:inversion + len(chord_type)]]
             cp.append(chord)
@@ -128,14 +126,9 @@ def arpeggiate_chord(chord, length, pattern=None):
         >>> arp = arpeggiate_chord(chord, 16, [0, 1, 3, 2, 0, 1, 2, 3])
         >>> # Returns a 16-note arpeggio following the specified pattern
     """
-    chord = chord + [x + 12 for x in chord] + [x + 24 for x in chord]
+    chord = _extend_octaves(chord, 3)
     if pattern is None:
-        pattern = [i for i in range(len(chord))]
+        pattern = list(range(len(chord)))
     pattern *= 5
-    # print(progression,length,pattern)
-    arp = [0 for _ in range(length)]
     assert all(x < len(chord) for x in pattern)
-    for i in range(length):
-        arp[i] = chord[pattern[(i)]]
-
-    return arp
+    return [chord[pattern[i]] for i in range(length)]

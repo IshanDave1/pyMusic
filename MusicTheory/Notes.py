@@ -14,11 +14,33 @@ Note naming convention:
 """
 
 import math
+from itertools import product
 from typing import List, Union, Set, Dict
 
-import numpy
-
 from MusicTheory.constants import *
+
+
+def _ensure_num(note: Union[int, str]) -> int:
+    """Convert note to MIDI number if it's a string."""
+    if isinstance(note, str):
+        return get_num(note)
+    return note
+
+
+def _extend_octaves(notes: List[int], octaves: int = 3) -> List[int]:
+    """Extend a list of notes across multiple octaves.
+    
+    Args:
+        notes: List of MIDI note numbers.
+        octaves: Number of octaves to span (default 3).
+    
+    Returns:
+        Extended list with notes repeated at higher octaves.
+    """
+    result = []
+    for i in range(octaves):
+        result.extend([n + 12 * i for n in notes])
+    return result
 
 
 def get_num(note: str) -> int:
@@ -97,9 +119,7 @@ def get_transpose_note(note: Union[int, str], semitones: int = 12) -> str:
         >>> get_transpose_note(60, 7)
         'G5'
     """
-    if type(note) == str:
-        note = get_num(note)
-    return get_note(note + semitones)
+    return get_note(_ensure_num(note) + semitones)
 
 
 def get_transpose_num(note: Union[int, str], semitones: int = 12) -> int:
@@ -120,9 +140,7 @@ def get_transpose_num(note: Union[int, str], semitones: int = 12) -> int:
         >>> get_transpose_num(60, -12)
         48
     """
-    if type(note) == str:
-        note = get_num(note)
-    return note + semitones
+    return _ensure_num(note) + semitones
 
 
 def get_scale_num(num: Union[int, str], scale_type: str) -> List[int]:
@@ -148,8 +166,7 @@ def get_scale_num(num: Union[int, str], scale_type: str) -> List[int]:
     """
     if scale_type not in scales.keys():
         raise ValueError(f"not supported scale {scale_type}")
-    if type(num) == str:
-        num = get_num(num)
+    num = _ensure_num(num)
     return [num + sum(scales[scale_type][:i]) for i in range(len(scales[scale_type]))]
 
 
@@ -196,8 +213,8 @@ def get_scale_chord(note: Union[int, str], scale_type: str, degree: int, num_not
         >>> get_scale_chord("C5", "major", 2, 4)  # Dm7
         [62, 65, 69, 72]
     """
-    scale = get_scale_num(note, scale_type) + get_scale_num(get_transpose_num(note), scale_type) + get_scale_num(
-        get_transpose_num(note, 24), scale_type)
+    base_scale = get_scale_num(note, scale_type)
+    scale = _extend_octaves(base_scale, 3)
     c_notes = [degree - 1 + 2 * i for i in range(num_notes)]
     return [scale[c_note] for c_note in c_notes]
 
@@ -251,10 +268,10 @@ def get_chord(base_note: Union[int, str], chord_type: str, inversion: int = 0, l
     Examples:
         >>> get_chord("C5", "major")
         [60, 64, 67]
-        >>> get_chord(60, "major", inversion=1)  # First inversion
+        >>> get_chord(60, "major", inversion=1)
         [64, 67, 72]
-        >>> get_chord("C5", "major_seventh", openness=0.5)  # More spread voicing
-        [60, 67, 71, 76]
+        >>> get_chord("C5", "major_seventh")
+        [60, 64, 67, 71]
     """
     if interval_half_steps[chords[chord_type][-1]] > 12:
         over_octaves = max(over_octaves, 2)
@@ -262,8 +279,7 @@ def get_chord(base_note: Union[int, str], chord_type: str, inversion: int = 0, l
         raise ValueError(f"openness is {openness} it has to be in range [0,1)")
     if chord_type not in chords.keys():
         raise ValueError(f"not supported chord {chord_type}")
-    if type(base_note) == str:
-        base_note = get_num(base_note)
+    base_note = _ensure_num(base_note)
 
     if lo_double_notes is None:
         lo_double_notes = []
@@ -285,51 +301,50 @@ def get_chord(base_note: Union[int, str], chord_type: str, inversion: int = 0, l
     return sorted(base_part)
 
 
-def get_inversion(chord: List[int], octaves: int) -> List[List[int]]:
+def get_inversion(chord: List[int], octaves: int, filtered: bool = True) -> List[List[int]]:
     """
     Generate all possible voicings of a chord across multiple octaves.
 
     Creates all combinations of chord tones spread across the specified
-    number of octaves, filtered to ensure proper voice spacing and sorted
-    by evenness of voice distribution.
+    number of octaves, optionally filtered to ensure proper voice spacing,
+    and sorted by evenness of voice distribution.
 
     Args:
         chord: A list of MIDI note numbers representing the chord.
         octaves: Number of octaves to spread voicings across.
+        filtered: If True (default), filters to ensure the voicing spans
+                  at least (octaves-1) * 12 semitones. If False, includes
+                  all voicings including tightly-spaced ones.
 
     Returns:
-        A list of chord voicings (each a list of MIDI notes), filtered to
-        ensure the voicing spans at least (octaves-1) * 12 semitones,
-        sorted by evenness of note spacing.
+        A list of chord voicings (each a list of MIDI notes), sorted by
+        evenness of note spacing.
 
     Example:
         >>> chord = [60, 64, 67]  # C major
         >>> voicings = get_inversion(chord, 2)
         >>> # Returns various spread voicings of C major across 2 octaves
+        >>> all_voicings = get_inversion(chord, 2, filtered=False)
+        >>> # Returns all voicings including tightly-spaced ones
     """
     chord_in_octaves = [[note + 12 * octave for octave in range(octaves)] for note in chord]
-
-    def helper(lol):
-        if len(lol) == 1:
-            return [[x] for x in lol[0]]
-        lol_sub = helper(lol[:-1])
-        return [l + [ele] for l in lol_sub for ele in lol[-1]]
-
-    inv = helper(chord_in_octaves)
+    inv = [list(combo) for combo in product(*chord_in_octaves)]
 
     def get_evenness(lis):
-        return numpy.prod([lis[i] - lis[i - 1] for i in range(1, len(lis))])
+        return math.prod(lis[i] - lis[i - 1] for i in range(1, len(lis)))
 
-    return list(filter(lambda x: x[-1] - x[0] >= 12 * (octaves - 1),
-                       sorted([sorted(ch) for ch in inv], key=lambda x: get_evenness(x))))
+    sorted_inv = sorted([sorted(ch) for ch in inv], key=get_evenness)
+    
+    if filtered:
+        return [x for x in sorted_inv if x[-1] - x[0] >= 12 * (octaves - 1)]
+    return sorted_inv
 
 
 def get_inversion_unfiltered(chord: List[int], octaves: int) -> List[List[int]]:
     """
     Generate all possible voicings of a chord without span filtering.
 
-    Similar to get_inversion but without the minimum span requirement,
-    returning all possible combinations sorted by evenness.
+    This is a convenience wrapper around get_inversion with filtered=False.
 
     Args:
         chord: A list of MIDI note numbers representing the chord.
@@ -337,26 +352,12 @@ def get_inversion_unfiltered(chord: List[int], octaves: int) -> List[List[int]]:
 
     Returns:
         A list of all chord voicings sorted by evenness of note spacing.
-        Unlike get_inversion, includes tightly-spaced voicings.
 
     Example:
         >>> chord = [60, 64, 67]
         >>> all_voicings = get_inversion_unfiltered(chord, 2)
     """
-    chord_in_octaves = [[note + 12 * octave for octave in range(octaves)] for note in chord]
-
-    def helper(lol):
-        if len(lol) == 1:
-            return [[x] for x in lol[0]]
-        lol_sub = helper(lol[:-1])
-        return [l + [ele] for l in lol_sub for ele in lol[-1]]
-
-    inv = helper(chord_in_octaves)
-
-    def get_evenness(lis):
-        return numpy.prod([lis[i] - lis[i - 1] for i in range(1, len(lis))])
-
-    return list(sorted([sorted(ch) for ch in inv], key=lambda x: get_evenness(x)))
+    return get_inversion(chord, octaves, filtered=False)
 
 
 def is_same_chord(c1: List[int], c2: List[int]) -> bool:
@@ -452,8 +453,8 @@ def get_mean_chord_distance(base_note: Union[int, str], chord_type, base_note2: 
         The absolute difference between mean pitches of the two chords.
 
     Example:
-        >>> get_mean_chord_distance("C5", "major", "G5", "major")
-        7.0
+        >>> abs(get_mean_chord_distance("C5", "major", "G5", "major") - 7.0) < 0.001
+        True
     """
     return get_mean_chord_distance_chord(get_chord(base_note, chord_type, inversion),
                                          get_chord(base_note2, chord_type2, inversion2))
@@ -471,8 +472,8 @@ def get_mean_chord_distance_chord(chord1: List[int], chord2: List[int]) -> float
         The absolute difference between the average pitch of each chord.
 
     Example:
-        >>> get_mean_chord_distance_chord([60, 64, 67], [67, 71, 74])
-        7.0
+        >>> abs(get_mean_chord_distance_chord([60, 64, 67], [67, 71, 74]) - 7.0) < 0.001
+        True
     """
     return abs(sum(chord1) / len(chord1) - sum(chord2) / len(chord2))
 
@@ -495,7 +496,7 @@ def get_taxicab_chord_distance_chord(chord1: List[int], chord2: List[int]) -> fl
 
     Example:
         >>> get_taxicab_chord_distance_chord([60, 64, 67], [62, 65, 69])
-        6  # Each voice moves by 2 semitones
+        5
     """
     if len(chord1) > len(chord2):
         return get_taxicab_chord_distance_chord(chord2, chord1)
@@ -526,7 +527,7 @@ def get_taxicab_chord_distance(base_note: Union[int, str], chord_type, base_note
 
     Example:
         >>> get_taxicab_chord_distance("C5", "major", "D5", "minor")
-        6
+        5
     """
     return get_taxicab_chord_distance_chord(get_chord(base_note, chord_type, inversion),
                                             get_chord(base_note2, chord_type2, inversion2))
@@ -552,7 +553,7 @@ def get_closest_inversion(base_note: Union[int, str], chord_type, base_note2: Un
 
     Example:
         >>> get_closest_inversion("C5", "major", "G5", "major", 0)
-        [67, 71, 74]  # G major in root position (closest to C major)
+        [67, 71, 74]
     """
     return min(
         (
@@ -585,7 +586,7 @@ def get_closest_taxicab_inversion(base_note: Union[int, str], chord_type, base_n
 
     Example:
         >>> get_closest_taxicab_inversion("C5", "major", "F5", "major", 0)
-        # Returns F major voicing with minimal voice movement from C major
+        [60, 65, 69]
     """
     chord_two_possibilities = get_inversion_unfiltered(get_chord(get_transpose_num(base_note2, -12), chord_type2), 3)
     chord_one = get_chord(base_note, chord_type, inversion)
@@ -608,7 +609,7 @@ def get_closest_taxicab_inversion_chord(chord_one: List[int], chord_2: List[int]
 
     Example:
         >>> get_closest_taxicab_inversion_chord([60, 64, 67], [65, 69, 72])
-        # Returns F major voicing closest to the given C major voicing
+        [60, 65, 69]
     """
     chord_two_possibilities = get_inversion_unfiltered([get_transpose_num(note, -12) for note in chord_2], 3)
     return min(chord_two_possibilities, key=lambda chord_two: get_taxicab_chord_distance_chord(chord_one, chord_two))
