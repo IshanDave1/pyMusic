@@ -3,14 +3,15 @@ Notes module for music theory operations.
 
 This module provides comprehensive utilities for working with musical notes,
 scales, chords, and voice leading. It supports MIDI note numbers and string
-representations (e.g., "C5", "Fs4") and includes functions for transposition,
+representations (e.g., "C4", "Fs3") and includes functions for transposition,
 scale generation, chord construction with advanced voicing options, and
 finding optimal chord inversions for smooth voice leading.
 
 Note naming convention:
     - Notes are named A-G with 's' suffix for sharps (e.g., Cs, Fs, Gs)
-    - Octave numbers follow the note name (e.g., C5 = middle C + 1 octave)
-    - MIDI note 60 = C5 (middle C in this system)
+    - Octave numbers follow standard MIDI convention
+    - MIDI note 60 = C4 (middle C)
+    - Default octave (when not specified) is 4, so "C" = C4 = MIDI 60
 """
 
 import math
@@ -49,7 +50,7 @@ def get_num(note: str) -> int:
 
     Args:
         note: A note string in format "NoteName" or "NoteNameOctave".
-              Examples: "C", "C5", "Fs4", "Gs"
+              Examples: "C", "C4", "Fs3", "Gs"
               If no octave is specified, uses middle_octave from constants.
 
     Returns:
@@ -59,17 +60,17 @@ def get_num(note: str) -> int:
         ValueError: If the note string is invalid.
 
     Examples:
-        >>> get_num("C5")
+        >>> get_num("C4")
         60
-        >>> get_num("Fs4")
+        >>> get_num("Fs3")
         54
-        >>> get_num("C")  # Uses middle_octave default
+        >>> get_num("C")  # Uses middle_octave default (4)
         60
     """
     if any(n.lower() == note.lower() for n in notes):
-        return [n.lower() == note.lower() for n in notes].index(True) + middle_octave * 12
+        return [n.lower() == note.lower() for n in notes].index(True) + (middle_octave + 1) * 12
     elif note[-1].isdigit() and any(n.lower() == note[:-1].lower() for n in notes):
-        return [n.lower() == note[:-1].lower() for n in notes].index(True) + int(note[-1]) * 12
+        return [n.lower() == note[:-1].lower() for n in notes].index(True) + (int(note[-1]) + 1) * 12
     else:
         raise ValueError(
             f"Invalid note '{note}'. Notes must be A-G (with optional sharp 's' suffix: Cs, Ds, Fs, Gs, As) followed by an octave number.")
@@ -83,20 +84,20 @@ def get_note(num: int) -> str:
         num: MIDI note number (must be within min_note to max_note range).
 
     Returns:
-        Note string in format "NoteNameOctave" (e.g., "C5", "Fs4").
+        Note string in format "NoteNameOctave" (e.g., "C4", "Fs3").
 
     Raises:
         ValueError: If num is outside the valid range.
 
     Examples:
         >>> get_note(60)
-        'C5'
-        >>> get_note(66)
-        'Fs5'
+        'C4'
+        >>> get_note(48)
+        'C3'
     """
     if num < min_note or num > max_note:
         raise ValueError(f"num {num} has to be in range 0-100")
-    return f"{notes[num % 12]}{num // 12}"
+    return f"{notes[num % 12]}{num // 12 - 1}"
 
 
 def get_transpose_note(note: Union[int, str], semitones: int = 12) -> str:
@@ -104,7 +105,7 @@ def get_transpose_note(note: Union[int, str], semitones: int = 12) -> str:
     Transpose a note by a number of semitones and return as string.
 
     Args:
-        note: The note to transpose (MIDI number or string like "C5").
+        note: The note to transpose (MIDI number or string like "C4").
         semitones: Number of semitones to transpose. Default is 12 (one octave up).
                    Negative values transpose down.
 
@@ -112,12 +113,12 @@ def get_transpose_note(note: Union[int, str], semitones: int = 12) -> str:
         The transposed note as a string.
 
     Examples:
-        >>> get_transpose_note("C5")
-        'C6'
-        >>> get_transpose_note("C5", -12)
-        'C4'
+        >>> get_transpose_note("C4")
+        'C5'
+        >>> get_transpose_note("C4", -12)
+        'C3'
         >>> get_transpose_note(60, 7)
-        'G5'
+        'G4'
     """
     return get_note(_ensure_num(note) + semitones)
 
@@ -127,7 +128,7 @@ def get_transpose_num(note: Union[int, str], semitones: int = 12) -> int:
     Transpose a note by a number of semitones and return as MIDI number.
 
     Args:
-        note: The note to transpose (MIDI number or string like "C5").
+        note: The note to transpose (MIDI number or string like "C4").
         semitones: Number of semitones to transpose. Default is 12 (one octave up).
                    Negative values transpose down.
 
@@ -135,7 +136,7 @@ def get_transpose_num(note: Union[int, str], semitones: int = 12) -> int:
         The transposed note as a MIDI number.
 
     Examples:
-        >>> get_transpose_num("C5")
+        >>> get_transpose_num("C4")
         72
         >>> get_transpose_num(60, -12)
         48
@@ -161,7 +162,7 @@ def get_scale_num(num: Union[int, str], scale_type: str) -> List[int]:
     Examples:
         >>> get_scale_num(60, "major")
         [60, 62, 64, 65, 67, 69, 71]
-        >>> get_scale_num("C5", "minor")
+        >>> get_scale_num("C4", "minor")
         [60, 62, 63, 65, 67, 68, 70]
     """
     if scale_type not in scales.keys():
@@ -183,7 +184,7 @@ def get_scale_degree(note: Union[int, str], scale_type: str, degree: int) -> int
         The MIDI note number of the requested scale degree.
 
     Examples:
-        >>> get_scale_degree("C5", "major", 5)  # The 5th degree (G)
+        >>> get_scale_degree("C4", "major", 5)  # The 5th degree (G)
         67
         >>> get_scale_degree(60, "major", 3)  # The 3rd degree (E)
         64
@@ -208,9 +209,9 @@ def get_scale_chord(note: Union[int, str], scale_type: str, degree: int, num_not
         A list of MIDI note numbers representing the chord.
 
     Examples:
-        >>> get_scale_chord("C5", "major", 1, 3)  # C major triad
+        >>> get_scale_chord("C4", "major", 1, 3)  # C major triad
         [60, 64, 67]
-        >>> get_scale_chord("C5", "major", 2, 4)  # Dm7
+        >>> get_scale_chord("C4", "major", 2, 4)  # Dm7
         [62, 65, 69, 72]
     """
     base_scale = get_scale_num(note, scale_type)
@@ -232,7 +233,7 @@ def get_scale_notes(num: Union[int, str], scale_type: str) -> List[str]:
 
     Examples:
         >>> get_scale_notes(60, "major")
-        ['C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5']
+        ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4']
     """
     return [get_note(n) for n in get_scale_num(num, scale_type)]
 
@@ -266,11 +267,11 @@ def get_chord(base_note: Union[int, str], chord_type: str, inversion: int = 0, l
         ValueError: If chord_type is not supported or openness is out of range.
 
     Examples:
-        >>> get_chord("C5", "major")
+        >>> get_chord("C4", "major")
         [60, 64, 67]
         >>> get_chord(60, "major", inversion=1)
         [64, 67, 72]
-        >>> get_chord("C5", "major_seventh")
+        >>> get_chord("C4", "major_seventh")
         [60, 64, 67, 71]
     """
     if interval_half_steps[chords[chord_type][-1]] > 12:
@@ -414,12 +415,12 @@ def get_chord_from_notes(notes_as_list: Set[int]) -> Dict[str, List[int]]:
         notes_as_list: A set of MIDI note numbers to analyze.
 
     Returns:
-        A dictionary mapping chord names (e.g., "C5 major") to their
+        A dictionary mapping chord names (e.g., "C4 major") to their
         MIDI note representations.
 
     Example:
         >>> get_chord_from_notes({60, 64, 67})
-        {'C5 major': [60, 64, 67]}
+        {'C4 major': [60, 64, 67]}
     """
     def is_in_Set(ch, nts) -> bool:
         return all(x in nts for x in ch)
@@ -453,7 +454,7 @@ def get_mean_chord_distance(base_note: Union[int, str], chord_type, base_note2: 
         The absolute difference between mean pitches of the two chords.
 
     Example:
-        >>> abs(get_mean_chord_distance("C5", "major", "G5", "major") - 7.0) < 0.001
+        >>> abs(get_mean_chord_distance("C4", "major", "G4", "major") - 7.0) < 0.001
         True
     """
     return get_mean_chord_distance_chord(get_chord(base_note, chord_type, inversion),
@@ -526,7 +527,7 @@ def get_taxicab_chord_distance(base_note: Union[int, str], chord_type, base_note
         The taxicab distance between the two chords.
 
     Example:
-        >>> get_taxicab_chord_distance("C5", "major", "D5", "minor")
+        >>> get_taxicab_chord_distance("C4", "major", "D4", "minor")
         5
     """
     return get_taxicab_chord_distance_chord(get_chord(base_note, chord_type, inversion),
@@ -552,7 +553,7 @@ def get_closest_inversion(base_note: Union[int, str], chord_type, base_note2: Un
         The second chord in its closest inversion as a list of MIDI notes.
 
     Example:
-        >>> get_closest_inversion("C5", "major", "G5", "major", 0)
+        >>> get_closest_inversion("C4", "major", "G4", "major", 0)
         [67, 71, 74]
     """
     return min(
@@ -585,7 +586,7 @@ def get_closest_taxicab_inversion(base_note: Union[int, str], chord_type, base_n
         The second chord in its optimal voicing for voice leading.
 
     Example:
-        >>> get_closest_taxicab_inversion("C5", "major", "F5", "major", 0)
+        >>> get_closest_taxicab_inversion("C4", "major", "F4", "major", 0)
         [60, 65, 69]
     """
     chord_two_possibilities = get_inversion_unfiltered(get_chord(get_transpose_num(base_note2, -12), chord_type2), 3)

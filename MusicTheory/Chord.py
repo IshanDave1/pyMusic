@@ -35,7 +35,7 @@ class ScaledChordProgression:
                              Default is 60 (middle C). Common values:
                              - 48 = C3
                              - 60 = C4 (middle C)
-                             - 72 = C5
+                             - 72 = C5 (one octave above middle C)
         """
         self.base_note = base_note
 
@@ -92,7 +92,7 @@ class ScaledChordProgression:
             start_note = degree[0] - 1
             inversion = degree[1]
             mode = degree[2]
-            parallel_scale_notes = _extend_octaves(get_scale_num(self.base_note, mode), 3)
+            parallel_scale_notes = _extend_octaves(get_scale_num(self.base_note, mode), 5)
             chord = [parallel_scale_notes[start_note + x] for x in
                      (chord_type + [y + 7 for y in chord_type])[inversion:inversion + len(chord_type)]]
             cp.append(chord)
@@ -110,7 +110,7 @@ def arpeggiate_chord(chord, length, pattern=None):
     Args:
         chord (list[int]): A list of MIDI note numbers representing the chord.
         length (int): The desired length of the output arpeggio sequence.
-        pattern (list[int] | None): Optional list of indices specifying the order
+        pattern (list[int] | None): Optional list of 1 based indices specifying the order
             to play chord tones. Indices refer to positions in the extended chord
             (original + 1 octave up + 2 octaves up). If None, defaults to sequential
             order [0, 1, 2, ...] through all chord tones.
@@ -123,12 +123,15 @@ def arpeggiate_chord(chord, length, pattern=None):
 
     Example:
         >>> chord = [60, 64, 67]  # C major triad
-        >>> arp = arpeggiate_chord(chord, 16, [0, 1, 3, 2, 0, 1, 2, 3])
+        >>> arp = arpeggiate_chord(chord, 16, [1, 2, 4, 3, 1, 2, 3, 4])
         >>> # Returns a 16-note arpeggio following the specified pattern
     """
-    chord = _extend_octaves(chord, 3)
+    chord = _extend_octaves(chord, 10)
+    # print(chord)
+    chord.sort()
     if pattern is None:
-        pattern = list(range(len(chord)))
+        pattern = list(range(length))
+    else :
+        pattern = [x-1 for x in pattern]
     pattern *= 5
-    assert all(x < len(chord) for x in pattern)
     return [chord[pattern[i]] for i in range(length)]

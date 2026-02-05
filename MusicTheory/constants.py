@@ -77,4 +77,4 @@ chords = {
 
 min_note = 0
 max_note = 120
-middle_octave = 5
+middle_octave = 4

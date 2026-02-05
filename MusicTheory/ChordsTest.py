@@ -15,7 +15,7 @@ class TestScaledChordProgression(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.scp = ScaledChordProgression(48)  # C3 as base note
-        self.scp_middle_c = ScaledChordProgression(60)  # C5 as base note
+        self.scp_middle_c = ScaledChordProgression(60)  # C5 (MIDI 60) as base note
 
     def test_init_default(self):
         """Test default initialization with middle C."""
@@ -123,14 +123,14 @@ class TestArpeggiateChord(unittest.TestCase):
         
         self.assertEqual(len(arp), 6)
         # Extended chord is [60, 64, 67, 72, 76, 79, 84, 88, 91]
-        # Default pattern is [0, 1, 2, 3, 4, 5, 6, 7, 8]
+        # Default pattern is [1, 2, 3, 4, 5, 6, 7, 8, 9]
         # First 6 notes: 60, 64, 67, 72, 76, 79
         self.assertEqual(arp, [60, 64, 67, 72, 76, 79])
 
     def test_arpeggio_with_pattern(self):
         """Test arpeggiation with custom pattern."""
         chord = [60, 64, 67]  # C major triad
-        pattern = [0, 1, 2, 1]  # Up and back
+        pattern = [1, 2, 3, 2]  # Up and back
         arp = arpeggiate_chord(chord, 4, pattern)
         
         self.assertEqual(len(arp), 4)
@@ -149,7 +149,7 @@ class TestArpeggiateChord(unittest.TestCase):
     def test_arpeggio_repeating_pattern(self):
         """Test arpeggiation with pattern that repeats."""
         chord = [60, 64, 67]
-        pattern = [0, 2]  # Alternates root and fifth
+        pattern = [1, 3]  # Alternates root and fifth
         arp = arpeggiate_chord(chord, 6, pattern)
         
         self.assertEqual(len(arp), 6)
@@ -160,7 +160,7 @@ class TestArpeggiateChord(unittest.TestCase):
         """Test that arpeggiation extends chord across octaves."""
         chord = [60, 64, 67]
         # Access notes in higher octaves
-        pattern = [0, 3, 6]  # Root in 3 different octaves
+        pattern = [1, 4, 7]  # Root in 3 different octaves
         arp = arpeggiate_chord(chord, 3, pattern)
         
         # Index 0 = 60 (C4), 3 = 72 (C5), 6 = 84 (C6)
@@ -169,7 +169,7 @@ class TestArpeggiateChord(unittest.TestCase):
     def test_arpeggio_assertion_on_invalid_pattern(self):
         """Test that invalid pattern indices raise AssertionError."""
         chord = [60, 64, 67]  # 3 notes, extended to 9
-        pattern = [0, 1, 10]  # Index 10 is out of range
+        pattern = [1, 2, 11]  # Index 10 is out of range
         
         with self.assertRaises(AssertionError):
             arpeggiate_chord(chord, 3, pattern)
@@ -183,7 +183,7 @@ class TestIntegration(unittest.TestCase):
         scp = ScaledChordProgression(60)
         cp = scp.gp([1, 4, 5], "major")
         
-        pattern = [0, 1, 2, 1]
+        pattern = [1, 2, 3, 2]
         
         for chord in cp:
             arp = arpeggiate_chord(chord, 8, pattern)
@@ -194,10 +194,10 @@ class TestIntegration(unittest.TestCase):
     def test_get_note_on_arpeggiated_chord(self):
         """Test that arpeggiated notes convert to valid note names."""
         chord = [60, 64, 67]  # C major
-        arp = arpeggiate_chord(chord, 4, [0, 1, 2, 1])
+        arp = arpeggiate_chord(chord, 4, [1, 2, 3, 2])
         
         note_names = [get_note(n) for n in arp]
-        self.assertEqual(note_names, ['C5', 'E5', 'G5', 'E5'])
+        self.assertEqual(note_names, ['C4', 'E4', 'G4', 'E4'])
 
 
 if __name__ == '__main__':
