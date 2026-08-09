@@ -10,7 +10,7 @@ from pathlib import Path
 # Add parent directory to path so we can import from src/
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.music_theory.guitar.synthesizer import synthesize_guitar_progression, GuitarChordPattern
+from src.music_theory.guitar.synthesizer import GuitarChordPattern, synthesize_guitar_progression
 
 # ============================================================================
 # CONFIGURATION - EDIT THESE VALUES
@@ -19,10 +19,10 @@ from src.music_theory.guitar.synthesizer import synthesize_guitar_progression, G
 # Guitar chords (tabs format: -1 = not played, 0-12 = fret position)
 # STANDARD TUNING: E2, A2, D3, G3, B3, E4
 GUITAR_CHORDS = [
-    [-1, 0, 2, 2, 1, 0],      # Em7
-    [3, 2, 0, 0, 0, 3],        # F#m7
-    [-1, -1, 0, 2, 3, 2],      # A (barre)
-    [-1, -1, 0, 2, 3, 2],      # A (barre)
+    [-1, 0, 2, 2, 1, 0],  # Em7
+    [3, 2, 0, 0, 0, 3],  # F#m7
+    [-1, -1, 0, 2, 3, 2],  # A (barre)
+    [-1, -1, 0, 2, 3, 2],  # A (barre)
 ]
 
 # Chord duration in quarter notes
@@ -59,9 +59,10 @@ SEED = 42
 
 if __name__ == "__main__":
     import random
+
     if SEED is not None:
         random.seed(SEED)
-    
+
     print("Generating guitar synthesis...")
     print(f"  Chords: {len(GUITAR_CHORDS)}")
     print(f"  Tempo: {TEMPO} BPM")
@@ -69,12 +70,12 @@ if __name__ == "__main__":
     print(f"  Loops: {LOOPS}")
     print(f"  String drop probability: {DROP_PROBABILITY * 100:.1f}%")
     print(f"  Strum speed: {STRUM_SPEED}x")
-    
+
     # Create chord patterns
     chord_patterns = []
     for tabs in GUITAR_CHORDS:
         chord_patterns.append(GuitarChordPattern(tabs, CHORD_DURATION, STRUM_PATTERN))
-    
+
     # Generate
     synthesize_guitar_progression(
         chord_patterns=chord_patterns,
@@ -86,5 +87,5 @@ if __name__ == "__main__":
         output_path=OUTPUT_FILE,
         verbose=True,
     )
-    
+
     print(f"\n✓ Done! Check: {OUTPUT_FILE}")

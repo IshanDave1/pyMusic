@@ -41,7 +41,7 @@ if __name__ == "__main__":
     print(f"  Tempo: {TEMPO} BPM")
     print(f"  Volume: {VOLUME}")
     print(f"  Beat duration: {BEAT_DURATION}")
-    
+
     generate_raga_melody_prog(
         length=LENGTH,
         output_file=OUTPUT_FILE,
@@ -50,5 +50,5 @@ if __name__ == "__main__":
         beat_duration=BEAT_DURATION,
         verbose=True,
     )
-    
+
     print(f"\n✓ Done! Check: {OUTPUT_FILE}")

@@ -7,7 +7,7 @@ It also includes utilities for arpeggiating chords with custom patterns.
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional, Tuple
 
 from src.music_theory.core.notes import build_scale_midi, extend_notes_across_octaves
 
@@ -18,8 +18,8 @@ class ChordEvent:
 
     chord: str
     inversion: int = 0
-    lower_octave_doubles: Optional[List[int]] = None
-    upper_octave_doubles: Optional[List[int]] = None
+    lower_octave_doubles: Optional[Tuple[int, ...]] = None
+    upper_octave_doubles: Optional[Tuple[int, ...]] = None
     over_octaves: int = 1
     openness: float = 0.0
     rootless: bool = False
@@ -113,18 +113,25 @@ class ScaledChordProgression:
             degree = degrees[i]
             chord_type = chord_types[i]
             if isinstance(degree, int):
-                degree = (degree,0,scale_type )
+                degree = (degree, 0, scale_type)
             elif isinstance(degree, tuple) and len(degree) == 2:
                 degree = (degree[0], degree[1], scale_type)
             start_note = degree[0] - 1
             inversion = degree[1]
             mode = degree[2]
-            parallel_scale_notes = extend_notes_across_octaves(build_scale_midi(self.base_note, mode), 5)
-            chord = [parallel_scale_notes[start_note + x] for x in
-                     (chord_type + [y + 7 for y in chord_type])[inversion:inversion + len(chord_type)]]
+            parallel_scale_notes = extend_notes_across_octaves(
+                build_scale_midi(self.base_note, mode), 5
+            )
+            chord = [
+                parallel_scale_notes[start_note + x]
+                for x in (chord_type + [y + 7 for y in chord_type])[
+                    inversion : inversion + len(chord_type)
+                ]
+            ]
             cp.append(chord)
 
         return cp
+
 
 def build_arpeggio_from_chord(chord, length, pattern=None):
     """
@@ -157,7 +164,7 @@ def build_arpeggio_from_chord(chord, length, pattern=None):
     chord.sort()
     if pattern is None:
         pattern = list(range(length))
-    else :
-        pattern = [x-1 for x in pattern]
+    else:
+        pattern = [x - 1 for x in pattern]
     pattern *= 5
     return [chord[pattern[i]] for i in range(length)]

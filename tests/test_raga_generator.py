@@ -1,7 +1,7 @@
 from src.music_theory.raga.raga_generator import generate_melody, melody_to_midi, raag
 
 # Generate a melody of 16 notes
-melody = generate_melody(raag, 32*4)
+melody = generate_melody(raag, 32 * 4)
 
 print("Generated melody (midi_note, duration):")
 for i, (note, duration) in enumerate(melody):

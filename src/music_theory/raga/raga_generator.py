@@ -1,33 +1,40 @@
 import random
 from pathlib import Path
+from typing import Tuple
+
 from midiutil import MIDIFile
 
 raag = {
-    "aaroh": [1,2,4,5,"6b","7b"],
-    "avroh": [1,2,"3b",4,5,"6b","7b"],
-    "rules" : {
-        "nivas_notes" : [1,"3b","6b","7b"],
-    }
+    "aaroh": [1, 2, 4, 5, "6b", "7b"],
+    "avroh": [1, 2, "3b", 4, 5, "6b", "7b"],
+    "rules": {
+        "nivas_notes": [1, "3b", "6b", "7b"],
+    },
 }
+
 
 def generate_melody(raag, length):
     current_note_index = 0
-    melody = [(get_note_at_index(raag, current_note_index, "aaroh"), 1)]
+    melody = [(get_note_at_index(raag, current_note_index, "aaroh"), 1.0)]
     for i in range(length):
         next_note_index, duration_next_note = generate_next_note(raag, current_note_index)
         if next_note_index > current_note_index:
-            melody.append((get_note_at_index(raag, next_note_index, "aaroh", 60), duration_next_note))
+            melody.append(
+                (get_note_at_index(raag, next_note_index, "aaroh", 60), duration_next_note)
+            )
         else:
-            melody.append((get_note_at_index(raag, next_note_index, "avroh", 60), duration_next_note))
+            melody.append(
+                (get_note_at_index(raag, next_note_index, "avroh", 60), duration_next_note)
+            )
 
         current_note_index = next_note_index
     return melody
 
 
-def generate_next_note(raag, current_note_index) -> int:
+def generate_next_note(raag, current_note_index) -> Tuple[int, float]:
     """
     Generate the next note index in a raag melody.
-    
+
     Returns:
         Tuple of (next_note_index, duration_for_next_note)
     """
@@ -53,7 +60,11 @@ def generate_next_note(raag, current_note_index) -> int:
             next_note_index = current_note_index - 1
     duration = random.choices([0.25, 0.5, 1], weights=[1, 2, 1])[0]
     for note_rule in raag["rules"]["nivas_notes"]:
-        if parse_solfege(note_rule) == get_note_at_index(raag, next_note_index, "aaroh" if will_move_right else "avroh") % 12:
+        if (
+            parse_solfege(note_rule)
+            == get_note_at_index(raag, next_note_index, "aaroh" if will_move_right else "avroh")
+            % 12
+        ):
             duration = 1
     return next_note_index, duration
 
@@ -92,13 +103,13 @@ def parse_solfege(note_spec):
     """Convert solfège notation to semitone offset from Sa."""
     # Default shuddha (natural) intervals in semitones from Sa
     solfege_intervals = {
-        '1': 0,   # Sa
-        '2': 2,   # Re (shuddha)
-        '3': 4,   # Ga (shuddha)
-        '4': 5,   # Ma
-        '5': 7,   # Pa
-        '6': 9,   # Dha (shuddha)
-        '7': 11,  # Ni
+        "1": 0,  # Sa
+        "2": 2,  # Re (shuddha)
+        "3": 4,  # Ga (shuddha)
+        "4": 5,  # Ma
+        "5": 7,  # Pa
+        "6": 9,  # Dha (shuddha)
+        "7": 11,  # Ni
     }
 
     # Handle string or int input
@@ -112,15 +123,17 @@ def parse_solfege(note_spec):
 
     # Apply accidentals: 's' = sharp (+1), 'b' = flat (-1)
     for char in accidentals:
-        if char == 's':
+        if char == "s":
             interval += 1
-        elif char == 'b':
+        elif char == "b":
             interval -= 1
 
     return interval
 
 
-def melody_to_midi(melody, output_file=None, tempo=180, volume=48, beat_duration=4, return_midi=False):
+def melody_to_midi(
+    melody, output_file=None, tempo=180, volume=48, beat_duration=4, return_midi=False
+):
     """
     Convert a melody to a MIDI file or MIDIFile object.
 
@@ -159,13 +172,14 @@ def melody_to_midi(melody, output_file=None, tempo=180, volume=48, beat_duration
         return None
 
 
-def generate_raga_melody_prog(length=256, output_file=None, tempo=240, volume=80, 
-                               beat_duration=4, verbose=False):
+def generate_raga_melody_prog(
+    length=256, output_file=None, tempo=240, volume=80, beat_duration=4, verbose=False
+):
     """
     Convenience wrapper for generating complete raga melodies.
-    
+
     Generates an Indian classical (raga) melody and optionally saves to MIDI file.
-    
+
     Args:
         length: Length of melody in note indices (default 256)
         output_file: Path to save MIDI file. If None, returns MIDIFile object.
@@ -173,22 +187,22 @@ def generate_raga_melody_prog(length=256, output_file=None, tempo=240, volume=80
         volume: MIDI volume 0-127 (default 80)
         beat_duration: Beats per whole note (default 4)
         verbose: Print debug info (default False)
-    
+
     Returns:
         None if output_file is specified, otherwise MIDIFile object
     """
     melody = generate_melody(raag, length)
-    
+
     midi = melody_to_midi(
         melody,
         output_file=output_file,
         tempo=tempo,
         volume=volume,
         beat_duration=beat_duration,
-        return_midi=(output_file is None)
+        return_midi=(output_file is None),
     )
-    
+
     if verbose and output_file:
         print(f"  Wrote: {output_file}")
-    
+
     return midi

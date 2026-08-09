@@ -35,5 +35,6 @@ class TestChordTokens(unittest.TestCase):
     def test_chord_spec_distance_api(self):
         self.assertAlmostEqual(calculate_mean_chord_distance("C", "G"), 7.0)
 
+
 if __name__ == "__main__":
     unittest.main()

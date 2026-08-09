@@ -51,7 +51,7 @@ if __name__ == "__main__":
     print(f"  Tempo: {TEMPO} BPM")
     print(f"  Volume: {VOLUME}")
     print(f"  Octaves: {OCTAVES}")
-    
+
     generate_arpeggio_progression(
         CHORDS,
         output_file=OUTPUT_FILE,
@@ -61,5 +61,5 @@ if __name__ == "__main__":
         finger_pattern=FINGER_PATTERN,
         verbose=True,
     )
-    
+
     print(f"\n✓ Done! Check: {OUTPUT_FILE}")

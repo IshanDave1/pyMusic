@@ -76,9 +76,9 @@ Generate chord progressions with multiple sections, smooth voice leading, and cu
 SECTIONS = [
     (
         ["C", "G:7", "F"],  # Chords; omitted quality means major
-        [4, 4, 4],                    # Duration (quarter notes)
-        [[1, 1], [1, 1], [1]],        # Patterns (optional)
-        2                             # Loop count
+        [4, 4, 4],  # Duration (quarter notes)
+        [[1, 1], [1, 1], [1]],  # Patterns (optional)
+        2,  # Loop count
     ),
 ]
 
@@ -104,8 +104,8 @@ STRUM_DIRECTION = "down"  # or "up" or "alternating"
 Generate melodies following Indian classical music (raag) rules.
 
 ```python
-RAAG = "yaman"        # Choose from predefined raags
-LENGTH = 256          # Melody length in note indices
+RAAG = "yaman"  # Choose from predefined raags
+LENGTH = 256  # Melody length in note indices
 TEMPO = 180
 ```
 
@@ -138,7 +138,7 @@ compose_chord_progression(
     tempo=120,
     volume=70,
     smooth_voicing=True,  # Apply voice leading between chords
-    verbose=True
+    verbose=True,
 )
 ```
 
@@ -156,14 +156,13 @@ compose_chord_progression(
 from src.music_theory.core.notes import build_chord, find_chord_voicing_by_common_tones
 
 # Build a chord with various options
-chord = build_chord("C4")                    # [60, 64, 67]
-inverted = build_chord("C4", inversion=1)    # [64, 67, 72]
-open = build_chord("C4", openness=0.5)       # Wider voicing
+chord = build_chord("C4")  # [60, 64, 67]
+inverted = build_chord("C4", inversion=1)  # [64, 67, 72]
+open = build_chord("C4", openness=0.5)  # Wider voicing
 
 # Smart voice leading
 voicing = find_chord_voicing_by_common_tones(
-    chord1=[60, 64, 67],
-    chord2=[65, 69, 72]
+    chord1=[60, 64, 67], chord2=[65, 69, 72]
 )  # Returns chord2 re-voiced closest to chord1
 ```
 
@@ -177,10 +176,7 @@ patterns = [2, 3]  # Repeat times
 strum = "down"
 
 generate_arpeggio_progression(
-    chords,
-    output_file="output.mid",
-    patterns=patterns,
-    strum_direction=strum
+    chords, output_file="output.mid", patterns=patterns, strum_direction=strum
 )
 ```
 
@@ -190,11 +186,7 @@ generate_arpeggio_progression(
 from src.music_theory.raga.raga_generator import generate_raga_melody_prog
 
 generate_raga_melody_prog(
-    raag_name="bhairav",
-    length=128,
-    output_file="raga.mid",
-    tempo=180,
-    volume=70
+    raag_name="bhairav", length=128, output_file="raga.mid", tempo=180, volume=70
 )
 ```
 
@@ -207,10 +199,7 @@ guitar_chords = [[0, 0, 2, 2, 1, 0], [0, 0, 0, 2, 1, 0]]
 patterns = [4, 4]  # Repeat times per chord
 
 synthesize_guitar_progression(
-    guitar_chords,
-    output_file="guitar.mid",
-    patterns=patterns,
-    pattern_type="downstrokes"
+    guitar_chords, output_file="guitar.mid", patterns=patterns, pattern_type="downstrokes"
 )
 ```
 
@@ -285,22 +274,18 @@ from src.music_theory.midi.compose import compose_chord_progression
 sections = [
     (
         [
-            "D4:m7",      # ii chord
-            "G4:7",       # V chord
-            "C4:maj7",    # I chord
+            "D4:m7",  # ii chord
+            "G4:7",  # V chord
+            "C4:maj7",  # I chord
         ],
         [4, 4, 4],
         None,
-        2  # Loop twice
+        2,  # Loop twice
     ),
 ]
 
 compose_chord_progression(
-    sections,
-    output_file="jazz_251.mid",
-    tempo=140,
-    volume=80,
-    smooth_voicing=True
+    sections, output_file="jazz_251.mid", tempo=140, volume=80, smooth_voicing=True
 )
 ```
 
@@ -310,10 +295,7 @@ compose_chord_progression(
 from src.music_theory.raga.raga_generator import generate_raga_melody_prog
 
 generate_raga_melody_prog(
-    raag_name="bhairav",
-    length=256,
-    output_file="bhairav_improv.mid",
-    tempo=180
+    raag_name="bhairav", length=256, output_file="bhairav_improv.mid", tempo=180
 )
 ```
 

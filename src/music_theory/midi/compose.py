@@ -5,16 +5,20 @@ Converts chord-token specifications into full MIDI chord progressions.
 """
 
 from pathlib import Path
+from typing import Any
+
 from midiutil import MIDIFile
-from src.music_theory.core.notes import build_chord, find_chord_voicing_by_common_tones
+
 from src.music_theory.core.chord import ChordEvent
+from src.music_theory.core.notes import build_chord, find_chord_voicing_by_common_tones
 
 
-def compose_chord_progression(sections, output_file=None, tempo=120, volume=70,
-                              smooth_voicing=False, verbose=False):
+def compose_chord_progression(
+    sections, output_file=None, tempo=120, volume=70, smooth_voicing=False, verbose=False
+):
     """
     Generate a chord progression from note/chord type pairs, supporting multiple sections.
-    
+
     Args:
         sections: List of (chords, chord_durations, patterns, loop_count) tuples.
                  Each section represents a separate progression segment with its own configuration.
@@ -25,7 +29,7 @@ def compose_chord_progression(sections, output_file=None, tempo=120, volume=70,
                        leading between consecutive chords, minimizing note movement (default False).
                        Note: smooth voicing persists across section boundaries.
         verbose: Print debug info (default False)
-    
+
     Returns:
         None if output_file is specified, otherwise MIDIFile object
     """
@@ -33,7 +37,7 @@ def compose_chord_progression(sections, output_file=None, tempo=120, volume=70,
     midi.addTempo(0, 0, tempo)
 
     current_time = 0
-    
+
     # Initialize previous_chord_notes to the last chord of the progression
     # This allows the first chord to smooth-lead from the end, creating a loop
     if smooth_voicing and sections:
@@ -49,7 +53,7 @@ def compose_chord_progression(sections, output_file=None, tempo=120, volume=70,
 
     for section_idx, section in enumerate(sections):
         chords, chord_durations, patterns, loop_count = section
-        
+
         # Default durations
         if chord_durations is None:
             chord_durations = [4] * len(chords)
@@ -61,11 +65,14 @@ def compose_chord_progression(sections, output_file=None, tempo=120, volume=70,
 
                 # Apply smooth voicing if enabled and not first chord
                 if smooth_voicing and previous_chord_notes is not None:
-                    chord_notes = find_chord_voicing_by_common_tones(previous_chord_notes, chord_notes)
+                    chord_notes = find_chord_voicing_by_common_tones(
+                        previous_chord_notes, chord_notes
+                    )
 
                 chord_duration = chord_durations[chord_idx]
 
                 # Get pattern for this chord
+                pattern: Any
                 if patterns is None:
                     # No pattern: play all chord notes once for full duration
                     pattern = [1]
@@ -113,6 +120,4 @@ def _build_chord_event(chord_item):
         return build_chord(chord_item.chord, **chord_item.build_kwargs())
     if isinstance(chord_item, str):
         return build_chord(chord_item)
-    raise TypeError(
-        "Chord entries must be chord-token strings or ChordEvent instances."
-    )
+    raise TypeError("Chord entries must be chord-token strings or ChordEvent instances.")

@@ -17,7 +17,7 @@ Note naming convention:
 import math
 import re
 from itertools import product
-from typing import List, Union, Set, Dict
+from typing import Dict, List, Optional, Sequence, Set, Union
 
 from src.music_theory.core.constants import (
     chords,
@@ -39,11 +39,11 @@ def note_to_midi(note: Union[int, str]) -> int:
 
 def extend_notes_across_octaves(notes: List[int], octaves: int = 3) -> List[int]:
     """Extend a list of notes across multiple octaves.
-    
+
     Args:
         notes: List of MIDI note numbers.
         octaves: Number of octaves to span (default 3).
-    
+
     Returns:
         Extended list with notes repeated at higher octaves.
     """
@@ -215,7 +215,9 @@ def get_scale_degree(note: Union[int, str], scale_type: str, degree: int) -> int
     return build_scale_midi(note, scale_type)[degree - 1]
 
 
-def build_diatonic_chord(note: Union[int, str], scale_type: str, degree: int, num_notes: int) -> List[int]:
+def build_diatonic_chord(
+    note: Union[int, str], scale_type: str, degree: int, num_notes: int
+) -> List[int]:
     """
     Build a chord from scale degrees (diatonic chord).
 
@@ -291,10 +293,16 @@ def parse_chord_token(chord: str) -> tuple[str, str]:
     return root, chord_type
 
 
-def _build_chord_from_parts(base_note: Union[int, str], chord_type: str, inversion: int = 0,
-                            lower_octave_doubles: List[int] = None,
-              upper_octave_doubles: List[int] = None, over_octaves=1,
-              openness: float = 0.0, rootless=False) -> List[int]:
+def _build_chord_from_parts(
+    base_note: Union[int, str],
+    chord_type: str,
+    inversion: int = 0,
+    lower_octave_doubles: Optional[Sequence[int]] = None,
+    upper_octave_doubles: Optional[Sequence[int]] = None,
+    over_octaves=1,
+    openness: float = 0.0,
+    rootless=False,
+) -> List[int]:
     """Build a chord from already-separated root and quality values."""
     if chord_type not in chords:
         raise ValueError(f"Unsupported chord quality '{chord_type}'.")
@@ -316,7 +324,12 @@ def _build_chord_from_parts(base_note: Union[int, str], chord_type: str, inversi
     base_part.extend(transposed_part)
     base_part.sort()
 
-    all_inversions = list(filter(lambda x: have_same_inversion(x, base_part), generate_chord_voicings(base_part, over_octaves)))
+    all_inversions = list(
+        filter(
+            lambda x: have_same_inversion(x, base_part),
+            generate_chord_voicings(base_part, over_octaves),
+        )
+    )
     base_part = all_inversions[math.floor(openness * len(all_inversions))]
     base_part.extend(lower_notes)
     base_part.extend(upper_notes)
@@ -324,9 +337,15 @@ def _build_chord_from_parts(base_note: Union[int, str], chord_type: str, inversi
     return sorted(base_part)
 
 
-def build_chord(chord: str, inversion: int = 0, lower_octave_doubles: List[int] = None,
-                upper_octave_doubles: List[int] = None, over_octaves=1,
-                openness: float = 0.0, rootless=False) -> List[int]:
+def build_chord(
+    chord: str,
+    inversion: int = 0,
+    lower_octave_doubles: Optional[Sequence[int]] = None,
+    upper_octave_doubles: Optional[Sequence[int]] = None,
+    over_octaves=1,
+    openness: float = 0.0,
+    rootless=False,
+) -> List[int]:
     """
     Generate a chord with advanced voicing options.
 
@@ -362,12 +381,20 @@ def build_chord(chord: str, inversion: int = 0, lower_octave_doubles: List[int] 
     """
     base_note, chord_type = parse_chord_token(chord)
     return _build_chord_from_parts(
-        base_note, chord_type, inversion, lower_octave_doubles,
-        upper_octave_doubles, over_octaves, openness, rootless,
+        base_note,
+        chord_type,
+        inversion,
+        lower_octave_doubles,
+        upper_octave_doubles,
+        over_octaves,
+        openness,
+        rootless,
     )
 
 
-def generate_chord_voicings(chord: List[int], octaves: int, filtered: bool = True) -> List[List[int]]:
+def generate_chord_voicings(
+    chord: List[int], octaves: int, filtered: bool = True
+) -> List[List[int]]:
     """
     Generate all possible voicings of a chord across multiple octaves.
 
@@ -400,14 +427,21 @@ def generate_chord_voicings(chord: List[int], octaves: int, filtered: bool = Tru
         return math.prod(spacing_list[i] - spacing_list[i - 1] for i in range(1, len(spacing_list)))
 
     sorted_voicings = sorted([sorted(voicing) for voicing in voicings], key=get_evenness)
-    
+
     if filtered:
-        return [voicing for voicing in sorted_voicings if voicing[-1] - voicing[0] >= 12 * (octaves - 1)]
+        return [
+            voicing for voicing in sorted_voicings if voicing[-1] - voicing[0] >= 12 * (octaves - 1)
+        ]
     return sorted_voicings
+
 
 def build_chord_from_pattern(chord: List[int], pattern: List[int]):
     pattern_indices = [x - 1 for x in pattern]
-    start_note = chord[pattern_indices[0]] - 12 if (chord[pattern_indices[0]] > chord[0]) else chord[pattern_indices[0]]
+    start_note = (
+        chord[pattern_indices[0]] - 12
+        if (chord[pattern_indices[0]] > chord[0])
+        else chord[pattern_indices[0]]
+    )
     chord_pattern = [start_note]
     for i in range(1, len(pattern_indices)):
         next_note = chord[pattern_indices[i]] % 12
@@ -415,7 +449,6 @@ def build_chord_from_pattern(chord: List[int], pattern: List[int]):
             next_note += 12
         chord_pattern.append(next_note)
     return chord_pattern
-
 
 
 def generate_all_chord_voicings(chord: List[int], octaves: int) -> List[List[int]]:
@@ -499,6 +532,7 @@ def identify_chords_from_notes(notes_as_list: Set[int]) -> Dict[str, List[int]]:
         >>> identify_chords_from_notes({60, 64, 67})
         {'C4:maj': [60, 64, 67]}
     """
+
     def is_in_set(chord_tones, note_set) -> bool:
         return all(x in note_set for x in chord_tones)
 
@@ -510,6 +544,7 @@ def identify_chords_from_notes(notes_as_list: Set[int]) -> Dict[str, List[int]]:
                 all_chords[f"{midi_to_note_string(note)}:{chord_type}"] = chord_as_list
 
     return all_chords
+
 
 def calculate_mean_chord_distance(chord1: str, chord2: str, inversion=0, inversion2=0) -> float:
     """
@@ -531,8 +566,9 @@ def calculate_mean_chord_distance(chord1: str, chord2: str, inversion=0, inversi
         >>> abs(calculate_mean_chord_distance("C4", "G4") - 7.0) < 0.001
         True
     """
-    return calculate_mean_chord_distance_between_notes(build_chord(chord1, inversion=inversion),
-                                         build_chord(chord2, inversion=inversion2))
+    return calculate_mean_chord_distance_between_notes(
+        build_chord(chord1, inversion=inversion), build_chord(chord2, inversion=inversion2)
+    )
 
 
 def calculate_mean_chord_distance_between_notes(chord1: List[int], chord2: List[int]) -> float:
@@ -601,8 +637,9 @@ def calculate_taxicab_distance(chord1: str, chord2: str, inversion=0, inversion2
         >>> calculate_taxicab_distance("C4", "D4:m")
         5
     """
-    return calculate_taxicab_distance_between_notes(build_chord(chord1, inversion=inversion),
-                                            build_chord(chord2, inversion=inversion2))
+    return calculate_taxicab_distance_between_notes(
+        build_chord(chord1, inversion=inversion), build_chord(chord2, inversion=inversion2)
+    )
 
 
 def find_closest_chord_inversion_by_mean(chord1: str, chord2: str, inversion) -> List[int]:
@@ -627,9 +664,10 @@ def find_closest_chord_inversion_by_mean(chord1: str, chord2: str, inversion) ->
     _, chord_type2 = parse_chord_token(chord2)
     return min(
         (
-            (calculate_mean_chord_distance(
-                chord1, chord2, inversion, inv
-            ), build_chord(chord2, inversion=inv))
+            (
+                calculate_mean_chord_distance(chord1, chord2, inversion, inv),
+                build_chord(chord2, inversion=inv),
+            )
             for inv in range(len(chords[chord_type2]))
         ),
         key=lambda x: x[0],
@@ -660,7 +698,10 @@ def find_closest_chord_voicing_for_voice_leading(chord1: str, chord2: str, inver
         _build_chord_from_parts(transpose_to_midi(base_note2, -12), chord_type2), 3
     )
     chord_one = build_chord(chord1, inversion=inversion)
-    return min(chord_two_possibilities, key=lambda chord_two: calculate_taxicab_distance_between_notes(chord_one, chord_two))
+    return min(
+        chord_two_possibilities,
+        key=lambda chord_two: calculate_taxicab_distance_between_notes(chord_one, chord_two),
+    )
 
 
 def find_smooth_chord_voicing_from_notes(chord_one: List[int], chord_2: List[int]) -> List[int]:
@@ -681,28 +722,34 @@ def find_smooth_chord_voicing_from_notes(chord_one: List[int], chord_2: List[int
         >>> find_smooth_chord_voicing_from_notes([60, 64, 67], [65, 69, 72])
         [60, 65, 69]
     """
-    chord_two_possibilities = generate_all_chord_voicings([transpose_to_midi(note, -12) for note in chord_2], 3)
-    return min(chord_two_possibilities, key=lambda chord_two: calculate_taxicab_distance_between_notes(chord_one, chord_two))
+    chord_two_possibilities = generate_all_chord_voicings(
+        [transpose_to_midi(note, -12) for note in chord_2], 3
+    )
+    return min(
+        chord_two_possibilities,
+        key=lambda chord_two: calculate_taxicab_distance_between_notes(chord_one, chord_two),
+    )
+
 
 def find_chord_voicing_by_common_tones(chord1: List[int], chord2: List[int]) -> List[int]:
     """
     Find a voicing of chord2 that maintains common tones with chord1.
-    
+
     This function preserves common pitch classes between chords in their original
     octaves from chord1, then places remaining notes in the octave closest to chord1.
     When multiple octaves have equal distance, prefers the closest register (octave offset
     closest to 0, i.e., keeping notes in their original octave).
-    
+
     Args:
         chord1: List of MIDI note numbers for the reference chord
         chord2: List of MIDI note numbers for the chord to voice
-    
+
     Returns:
         A sorted list of MIDI note numbers representing the voiced chord2
-        
+
     Raises:
         ValueError: If either chord is empty
-        
+
     Example:
         >>> find_chord_voicing_by_common_tones([60, 64, 67], [67, 71, 74])
         [59, 62, 67]
@@ -710,10 +757,10 @@ def find_chord_voicing_by_common_tones(chord1: List[int], chord2: List[int]) -> 
     # Input validation
     if not chord1 or not chord2:
         raise ValueError("Both chord1 and chord2 must be non-empty lists")
-    
+
     chord2_inversion = []
     same_note_indices = set()  # Use set to track which chord2 indices already used (dedup)
-    
+
     # Find common pitch classes
     for note1 in chord1:
         for j, note2 in enumerate(chord2):
@@ -729,9 +776,9 @@ def find_chord_voicing_by_common_tones(chord1: List[int], chord2: List[int]) -> 
     # Place remaining notes
     for i, note in enumerate(chord2):
         if i not in same_note_indices:
-            min_distance = float('inf')
+            min_distance = float("inf")
             best_octave_offsets = []  # Collect all offsets with minimum distance
-            
+
             # Find all octave offsets with minimum distance
             for octave_offset in range(-2, 3):
                 distance = distance_sum_absolute(chord1, note + 12 * octave_offset)
@@ -740,7 +787,7 @@ def find_chord_voicing_by_common_tones(chord1: List[int], chord2: List[int]) -> 
                     best_octave_offsets = [octave_offset]
                 elif distance == min_distance:  # Collect ties
                     best_octave_offsets.append(octave_offset)
-            
+
             # Prefer closest register (offset closest to 0)
             best_octave_offset = min(best_octave_offsets, key=lambda x: abs(x))
             chord2_inversion.append(note + 12 * best_octave_offset)

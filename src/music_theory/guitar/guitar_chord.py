@@ -25,6 +25,7 @@ def get_chord_from_tabs(tab):
 # Geometry Filters
 # ----------------------------------------------------------------------
 
+
 def max_muted_strings(n):
     return lambda tab: tab.count(MUTED) <= n
 
@@ -43,6 +44,7 @@ def max_fret_span(span):
     def filt(tab):
         fretted = [f for f in tab if f > 0]
         return not fretted or max(fretted) - min(fretted) <= span
+
     return filt
 
 
@@ -50,6 +52,7 @@ def lowest_fret_at_least(fret):
     def filt(tab):
         fretted = [f for f in tab if f > 0]
         return not fretted or min(fretted) >= fret
+
     return filt
 
 
@@ -57,12 +60,14 @@ def highest_fret_at_most(fret):
     def filt(tab):
         fretted = [f for f in tab if f > 0]
         return not fretted or max(fretted) <= fret
+
     return filt
 
 
 # ----------------------------------------------------------------------
 # Pitch Filters
 # ----------------------------------------------------------------------
+
 
 def bass_note_is(note):
     pitch_class = note_string_to_midi(note) % 12
@@ -75,25 +80,15 @@ def top_note_is(note):
 
 
 def bass_note_in(notes):
-    pitch_classes = {
-        note_string_to_midi(note) % 12
-        for note in notes
-    }
+    pitch_classes = {note_string_to_midi(note) % 12 for note in notes}
 
-    return lambda tab: (
-        get_chord_from_tabs(tab)[0] % 12 in pitch_classes
-    )
+    return lambda tab: get_chord_from_tabs(tab)[0] % 12 in pitch_classes
 
 
 def top_note_in(notes):
-    pitch_classes = {
-        note_string_to_midi(note) % 12
-        for note in notes
-    }
+    pitch_classes = {note_string_to_midi(note) % 12 for note in notes}
 
-    return lambda tab: (
-        get_chord_from_tabs(tab)[-1] % 12 in pitch_classes
-    )
+    return lambda tab: get_chord_from_tabs(tab)[-1] % 12 in pitch_classes
 
 
 def root_in_bass(root):
@@ -104,11 +99,9 @@ def root_in_bass(root):
 # Generator
 # ----------------------------------------------------------------------
 
+
 def get_tabs_from_chord_notes(chord_notes, filters=()):
-    chord_pitch_classes = {
-        note_string_to_midi(note) % 12
-        for note in chord_notes
-    }
+    chord_pitch_classes = {note_string_to_midi(note) % 12 for note in chord_notes}
 
     tabs = []
 
@@ -122,10 +115,7 @@ def get_tabs_from_chord_notes(chord_notes, filters=()):
                 if fret != MUTED
             }
 
-            if (
-                played_pitch_classes == chord_pitch_classes
-                and all(f(tab) for f in filters)
-            ):
+            if played_pitch_classes == chord_pitch_classes and all(f(tab) for f in filters):
                 tabs.append(tab[:])
 
             return
@@ -135,10 +125,7 @@ def get_tabs_from_chord_notes(chord_notes, filters=()):
         previous_pitch_class = (
             None
             if current_string == 0 or tab[-1] == MUTED
-            else (
-                STANDARD_GUITAR_TUNING_MIDI[current_string - 1]
-                + tab[-1]
-            ) % 12
+            else (STANDARD_GUITAR_TUNING_MIDI[current_string - 1] + tab[-1]) % 12
         )
 
         # mute string
@@ -149,14 +136,12 @@ def get_tabs_from_chord_notes(chord_notes, filters=()):
         open_string = STANDARD_GUITAR_TUNING_MIDI[current_string]
 
         for pitch_class in chord_pitch_classes:
-
             if pitch_class == previous_pitch_class:
                 continue
 
             first_fret = (pitch_class - open_string) % 12
 
             for fret in (first_fret, first_fret + 12):
-
                 if fret > MAX_FRET:
                     continue
 
@@ -179,42 +164,28 @@ def get_tabs_from_chord_notes(chord_notes, filters=()):
 # ----------------------------------------------------------------------
 
 if __name__ == "__main__":
-
     print("\nExample 1 - All C major voicings")
-    print(get_tabs_from_chord_notes(
-        ["C2", "E2", "G2"]
-    ))
+    print(get_tabs_from_chord_notes(["C2", "E2", "G2"]))
 
     print("\nExample 2 - Root in bass")
-    print(get_tabs_from_chord_notes(
-        ["C2", "E2", "G2"],
-        filters=[
-            root_in_bass("C2")
-        ]
-    ))
+    print(get_tabs_from_chord_notes(["C2", "E2", "G2"], filters=[root_in_bass("C2")]))
 
     print("\nExample 3 - No open strings")
-    print(get_tabs_from_chord_notes(
-        ["C2", "E2", "G2"],
-        filters=[
-            allow_open_strings(False)
-        ]
-    ))
+    print(get_tabs_from_chord_notes(["C2", "E2", "G2"], filters=[allow_open_strings(False)]))
 
     print("\nExample 4 - Compact jazz voicings")
-    print(get_tabs_from_chord_notes(
-        ["F2", "A2", "C2","E2"],
-        filters=[
-            max_fret_span(3),
-            min_strings_played(4),
-            max_muted_strings(2),
-            lowest_fret_at_least(3),
-            highest_fret_at_most(8)
-        ]
-    ))
+    print(
+        get_tabs_from_chord_notes(
+            ["F2", "A2", "C2", "E2"],
+            filters=[
+                max_fret_span(3),
+                min_strings_played(4),
+                max_muted_strings(2),
+                lowest_fret_at_least(3),
+                highest_fret_at_most(8),
+            ],
+        )
+    )
 
     print("\nExample 5 - Melody on G")
-    print(get_tabs_from_chord_notes(
-        ["E","Gs","B"],
-        filters=[max_muted_strings(0)]
-    ))
+    print(get_tabs_from_chord_notes(["E", "Gs", "B"], filters=[max_muted_strings(0)]))
