@@ -15,10 +15,19 @@ Note naming convention:
 """
 
 import math
+import re
 from itertools import product
 from typing import List, Union, Set, Dict
 
-from src.music_theory.core.constants import *
+from src.music_theory.core.constants import (
+    chords,
+    interval_half_steps,
+    max_note,
+    middle_octave,
+    min_note,
+    notes,
+    scales,
+)
 
 
 def note_to_midi(note: Union[int, str]) -> int:
@@ -67,13 +76,27 @@ def note_string_to_midi(note: str) -> int:
         >>> note_string_to_midi("C")  # Uses middle_octave default (4)
         60
     """
-    if any(n.lower() == note.lower() for n in notes):
-        return [n.lower() == note.lower() for n in notes].index(True) + (middle_octave + 1) * 12
-    elif note[-1].isdigit() and any(n.lower() == note[:-1].lower() for n in notes):
-        return [n.lower() == note[:-1].lower() for n in notes].index(True) + (int(note[-1]) + 1) * 12
-    else:
+    if not isinstance(note, str):
+        raise ValueError(f"Invalid note {note!r}. Expected a note string.")
+
+    match = re.fullmatch(r"([A-Ga-g])([s#b]?)([0-9]?)", note)
+    if match is None:
         raise ValueError(
-            f"Invalid note '{note}'. Notes must be A-G (with optional sharp 's' suffix: Cs, Ds, Fs, Gs, As) followed by an octave number.")
+            f"Invalid note '{note}'. Notes must use A-G with an optional s, #, or b accidental and optional octave."
+        )
+
+    letter, accidental, octave = match.groups()
+    pitch_classes = {name: index for index, name in enumerate(notes)}
+    pitch_class = pitch_classes[letter.upper()]
+    if accidental:
+        if accidental.lower() == "s" or accidental == "#":
+            pitch_class += 1
+        elif accidental.lower() == "b":
+            pitch_class -= 1
+    octave_number = int(octave) if octave else middle_octave
+    octave_number += pitch_class // 12
+    pitch_class %= 12
+    return pitch_class + (octave_number + 1) * 12
 
 
 def midi_to_note_string(num: int) -> str:
@@ -238,48 +261,47 @@ def build_scale_note_strings(num: Union[int, str], scale_type: str) -> List[str]
     return [midi_to_note_string(n) for n in build_scale_midi(num, scale_type)]
 
 
-def build_chord(base_note: Union[int, str], chord_type: str, inversion: int = 0, lower_octave_doubles: List[int] = None,
+def parse_chord_token(chord: str) -> tuple[str, str]:
+    """Parse a chord token into its root note and chord quality.
+
+    Chord tokens use ``ROOT[:QUALITY]``.  An omitted quality means major,
+    and the quality portion is deliberately not split on ``/`` so existing
+    qualities such as ``6/9`` remain valid and future slash chords can be
+    added without changing the outer token grammar.
+    """
+    if not isinstance(chord, str) or not chord.strip():
+        raise ValueError("Chord must be a non-empty string such as 'E' or 'D2:m9'.")
+
+    token = chord.strip()
+    if token.count(":") > 1:
+        raise ValueError(f"Invalid chord token '{chord}': expected ROOT[:QUALITY].")
+
+    if ":" in token:
+        root, chord_type = token.split(":", 1)
+        if not root or not chord_type:
+            raise ValueError(f"Invalid chord token '{chord}': expected ROOT[:QUALITY].")
+    else:
+        root, chord_type = token, "maj"
+
+    # Validate the root independently so chord-quality text cannot be
+    # accidentally consumed as part of a note name.
+    note_string_to_midi(root)
+    if chord_type not in chords:
+        raise ValueError(f"Unsupported chord quality '{chord_type}' in '{chord}'.")
+    return root, chord_type
+
+
+def _build_chord_from_parts(base_note: Union[int, str], chord_type: str, inversion: int = 0,
+                            lower_octave_doubles: List[int] = None,
               upper_octave_doubles: List[int] = None, over_octaves=1,
               openness: float = 0.0, rootless=False) -> List[int]:
-    """
-    Generate a chord with advanced voicing options.
-
-    Creates a chord based on the chord type with support for inversions,
-    octave doubling, spread voicings, and openness control.
-
-    Args:
-        base_note: The root note of the chord (MIDI number or string).
-        chord_type: The type of chord (e.g., "major", "minor", "dominant_seventh").
-                    Must be a key in the chords dictionary from constants.
-        inversion: The inversion number (0 = root position, 1 = first inversion, etc.).
-        lower_octave_doubles: List of chord tone indices to double in the lower octave.
-        upper_octave_doubles: List of chord tone indices to double in the upper octave.
-        over_octaves: Number of octaves to spread the chord over. Automatically
-                      increased to 2 for extended chords (9ths, 11ths, 13ths).
-        openness: A float in range [0, 1) controlling voicing spread.
-                  0 = closest voicing, approaching 1 = more open/spread voicing.
-        rootless: Reserved for future use (rootless voicings).
-
-    Returns:
-        A sorted list of MIDI note numbers representing the chord.
-
-    Raises:
-        ValueError: If chord_type is not supported or openness is out of range.
-
-    Examples:
-        >>> build_chord("C4", "major")
-        [60, 64, 67]
-        >>> build_chord(60, "major", inversion=1)
-        [64, 67, 72]
-        >>> build_chord("C4", "major_seventh")
-        [60, 64, 67, 71]
-    """
+    """Build a chord from already-separated root and quality values."""
+    if chord_type not in chords:
+        raise ValueError(f"Unsupported chord quality '{chord_type}'.")
     if interval_half_steps[chords[chord_type][-1]] > 12:
         over_octaves = max(over_octaves, 2)
     if openness < 0 or openness >= 1:
         raise ValueError(f"openness is {openness} it has to be in range [0,1)")
-    if chord_type not in chords.keys():
-        raise ValueError(f"not supported chord {chord_type}")
     base_note = note_to_midi(base_note)
 
     if lower_octave_doubles is None:
@@ -302,6 +324,49 @@ def build_chord(base_note: Union[int, str], chord_type: str, inversion: int = 0,
     return sorted(base_part)
 
 
+def build_chord(chord: str, inversion: int = 0, lower_octave_doubles: List[int] = None,
+                upper_octave_doubles: List[int] = None, over_octaves=1,
+                openness: float = 0.0, rootless=False) -> List[int]:
+    """
+    Generate a chord with advanced voicing options.
+
+    Creates a chord based on the chord type with support for inversions,
+    octave doubling, spread voicings, and openness control.
+
+    Args:
+        chord: Chord token in the form ``ROOT[:QUALITY]``.  If quality is
+               omitted, the chord is major.  Notes without octaves use the
+               middle octave (4), so ``"E"`` means E4 major.
+        inversion: The inversion number (0 = root position, 1 = first inversion, etc.).
+        lower_octave_doubles: List of chord tone indices to double in the lower octave.
+        upper_octave_doubles: List of chord tone indices to double in the upper octave.
+        over_octaves: Number of octaves to spread the chord over. Automatically
+                      increased to 2 for extended chords (9ths, 11ths, 13ths).
+        openness: A float in range [0, 1) controlling voicing spread.
+                  0 = closest voicing, approaching 1 = more open/spread voicing.
+        rootless: Reserved for future use (rootless voicings).
+
+    Returns:
+        A sorted list of MIDI note numbers representing the chord.
+
+    Raises:
+        ValueError: If chord_type is not supported or openness is out of range.
+
+    Examples:
+        >>> build_chord("C4")
+        [60, 64, 67]
+        >>> build_chord("C4", inversion=1)
+        [64, 67, 72]
+        >>> build_chord("C4:maj7")
+        [60, 64, 67, 71]
+    """
+    base_note, chord_type = parse_chord_token(chord)
+    return _build_chord_from_parts(
+        base_note, chord_type, inversion, lower_octave_doubles,
+        upper_octave_doubles, over_octaves, openness, rootless,
+    )
+
+
 def generate_chord_voicings(chord: List[int], octaves: int, filtered: bool = True) -> List[List[int]]:
     """
     Generate all possible voicings of a chord across multiple octaves.
@@ -322,9 +387,9 @@ def generate_chord_voicings(chord: List[int], octaves: int, filtered: bool = Tru
         evenness of note spacing.
 
     Example:
-        >>> chord = [60, 64, 67]  # C major
+        >>> chord = [60, 64, 67]  # C maj
         >>> voicings = generate_chord_voicings(chord, 2)
-        >>> # Returns various spread voicings of C major across 2 octaves
+        >>> # Returns various spread voicings of C maj across 2 octaves
         >>> all_voicings = generate_chord_voicings(chord, 2, filtered=False)
         >>> # Returns all voicings including tightly-spaced ones
     """
@@ -385,9 +450,9 @@ def are_same_pitch_classes(chord_1: List[int], chord_2: List[int]) -> bool:
         True if both chords have the same pitch classes, False otherwise.
 
     Example:
-        >>> are_same_pitch_classes([60, 64, 67], [72, 76, 79])  # Both C major
+        >>> are_same_pitch_classes([60, 64, 67], [72, 76, 79])  # Both C maj
         True
-        >>> are_same_pitch_classes([60, 64, 67], [60, 63, 67])  # C major vs C minor
+        >>> are_same_pitch_classes([60, 64, 67], [60, 63, 67])  # C maj vs C m
         False
     """
     return {x % 12 for x in chord_1} == {x % 12 for x in chord_2}
@@ -427,12 +492,12 @@ def identify_chords_from_notes(notes_as_list: Set[int]) -> Dict[str, List[int]]:
         notes_as_list: A set of MIDI note numbers to analyze.
 
     Returns:
-        A dictionary mapping chord names (e.g., "C4 major") to their
+        A dictionary mapping chord tokens (e.g., "C4:maj") to their
         MIDI note representations.
 
     Example:
         >>> identify_chords_from_notes({60, 64, 67})
-        {'C4 major': [60, 64, 67]}
+        {'C4:maj': [60, 64, 67]}
     """
     def is_in_set(chord_tones, note_set) -> bool:
         return all(x in note_set for x in chord_tones)
@@ -440,14 +505,13 @@ def identify_chords_from_notes(notes_as_list: Set[int]) -> Dict[str, List[int]]:
     all_chords = {}
     for note in notes_as_list:
         for chord_type in chords:
-            chord_as_list = build_chord(note, chord_type)
+            chord_as_list = _build_chord_from_parts(note, chord_type)
             if is_in_set({x % 12 for x in chord_as_list}, {x % 12 for x in notes_as_list}):
-                all_chords[f"{midi_to_note_string(note)} {chord_type}"] = chord_as_list
+                all_chords[f"{midi_to_note_string(note)}:{chord_type}"] = chord_as_list
 
     return all_chords
 
-def calculate_mean_chord_distance(base_note: Union[int, str], chord_type, base_note2: Union[int, str], chord_type2,
-                            inversion=0, inversion2=0) -> float:
+def calculate_mean_chord_distance(chord1: str, chord2: str, inversion=0, inversion2=0) -> float:
     """
     Calculate the mean pitch distance between two chords by type.
 
@@ -455,10 +519,8 @@ def calculate_mean_chord_distance(base_note: Union[int, str], chord_type, base_n
     Useful for finding chords in similar registers.
 
     Args:
-        base_note: Root note of the first chord.
-        chord_type: Type of the first chord.
-        base_note2: Root note of the second chord.
-        chord_type2: Type of the second chord.
+        chord1: Chord token for the first chord.
+        chord2: Chord token for the second chord.
         inversion: Inversion of the first chord.
         inversion2: Inversion of the second chord.
 
@@ -466,11 +528,11 @@ def calculate_mean_chord_distance(base_note: Union[int, str], chord_type, base_n
         The absolute difference between mean pitches of the two chords.
 
     Example:
-        >>> abs(calculate_mean_chord_distance("C4", "major", "G4", "major") - 7.0) < 0.001
+        >>> abs(calculate_mean_chord_distance("C4", "G4") - 7.0) < 0.001
         True
     """
-    return calculate_mean_chord_distance_between_notes(build_chord(base_note, chord_type, inversion),
-                                         build_chord(base_note2, chord_type2, inversion2))
+    return calculate_mean_chord_distance_between_notes(build_chord(chord1, inversion=inversion),
+                                         build_chord(chord2, inversion=inversion2))
 
 
 def calculate_mean_chord_distance_between_notes(chord1: List[int], chord2: List[int]) -> float:
@@ -522,16 +584,13 @@ def calculate_taxicab_distance_between_notes(chord1: List[int], chord2: List[int
     return dist
 
 
-def calculate_taxicab_distance(base_note: Union[int, str], chord_type, base_note2: Union[int, str], chord_type2,
-                               inversion=0, inversion2=0) -> float:
+def calculate_taxicab_distance(chord1: str, chord2: str, inversion=0, inversion2=0) -> float:
     """
     Calculate the taxicab distance between two chords by type.
 
     Args:
-        base_note: Root note of the first chord.
-        chord_type: Type of the first chord.
-        base_note2: Root note of the second chord.
-        chord_type2: Type of the second chord.
+        chord1: Chord token for the first chord.
+        chord2: Chord token for the second chord.
         inversion: Inversion of the first chord.
         inversion2: Inversion of the second chord.
 
@@ -539,15 +598,14 @@ def calculate_taxicab_distance(base_note: Union[int, str], chord_type, base_note
         The taxicab distance between the two chords.
 
     Example:
-        >>> calculate_taxicab_distance("C4", "major", "D4", "minor")
+        >>> calculate_taxicab_distance("C4", "D4:m")
         5
     """
-    return calculate_taxicab_distance_between_notes(build_chord(base_note, chord_type, inversion),
-                                            build_chord(base_note2, chord_type2, inversion2))
+    return calculate_taxicab_distance_between_notes(build_chord(chord1, inversion=inversion),
+                                            build_chord(chord2, inversion=inversion2))
 
 
-def find_closest_chord_inversion_by_mean(base_note: Union[int, str], chord_type, base_note2: Union[int, str], chord_type2,
-                          inversion) -> List[int]:
+def find_closest_chord_inversion_by_mean(chord1: str, chord2: str, inversion) -> List[int]:
     """
     Find the inversion of chord2 closest to chord1 using mean distance.
 
@@ -555,32 +613,30 @@ def find_closest_chord_inversion_by_mean(base_note: Union[int, str], chord_type,
     with the smallest mean pitch distance from the first chord.
 
     Args:
-        base_note: Root note of the first chord.
-        chord_type: Type of the first chord.
-        base_note2: Root note of the second chord.
-        chord_type2: Type of the second chord.
+        chord1: Chord token for the first chord.
+        chord2: Chord token for the second chord.
         inversion: Inversion of the first chord.
 
     Returns:
         The second chord in its closest inversion as a list of MIDI notes.
 
     Example:
-        >>> find_closest_chord_inversion_by_mean("C4", "major", "G4", "major", 0)
+        >>> find_closest_chord_inversion_by_mean("C4", "G4", 0)
         [67, 71, 74]
     """
+    _, chord_type2 = parse_chord_token(chord2)
     return min(
         (
             (calculate_mean_chord_distance(
-                base_note, chord_type, base_note2, chord_type2, inversion, inv
-            ), build_chord(base_note2, chord_type2, inv))
+                chord1, chord2, inversion, inv
+            ), build_chord(chord2, inversion=inv))
             for inv in range(len(chords[chord_type2]))
         ),
         key=lambda x: x[0],
     )[1]
 
 
-def find_closest_chord_voicing_for_voice_leading(base_note: Union[int, str], chord_type, base_note2: Union[int, str], chord_type2,
-                                  inversion) -> List[int]:
+def find_closest_chord_voicing_for_voice_leading(chord1: str, chord2: str, inversion) -> List[int]:
     """
     Find the voicing of chord2 with minimal voice movement from chord1.
 
@@ -588,21 +644,22 @@ def find_closest_chord_voicing_for_voice_leading(base_note: Union[int, str], cho
     total voice movement, ideal for smooth voice leading.
 
     Args:
-        base_note: Root note of the first chord.
-        chord_type: Type of the first chord.
-        base_note2: Root note of the second chord.
-        chord_type2: Type of the second chord.
+        chord1: Chord token for the first chord.
+        chord2: Chord token for the second chord.
         inversion: Inversion of the first chord.
 
     Returns:
         The second chord in its optimal voicing for voice leading.
 
     Example:
-        >>> find_closest_chord_voicing_for_voice_leading("C4", "major", "F4", "major", 0)
+        >>> find_closest_chord_voicing_for_voice_leading("C4", "F4", 0)
         [60, 65, 69]
     """
-    chord_two_possibilities = generate_all_chord_voicings(build_chord(transpose_to_midi(base_note2, -12), chord_type2), 3)
-    chord_one = build_chord(base_note, chord_type, inversion)
+    base_note2, chord_type2 = parse_chord_token(chord2)
+    chord_two_possibilities = generate_all_chord_voicings(
+        _build_chord_from_parts(transpose_to_midi(base_note2, -12), chord_type2), 3
+    )
+    chord_one = build_chord(chord1, inversion=inversion)
     return min(chord_two_possibilities, key=lambda chord_two: calculate_taxicab_distance_between_notes(chord_one, chord_two))
 
 
@@ -648,7 +705,7 @@ def find_chord_voicing_by_common_tones(chord1: List[int], chord2: List[int]) -> 
         
     Example:
         >>> find_chord_voicing_by_common_tones([60, 64, 67], [67, 71, 74])
-        [59, 62, 67]  # G kept at 67, B and D placed close to chord1
+        [59, 62, 67]
     """
     # Input validation
     if not chord1 or not chord2:
@@ -690,5 +747,3 @@ def find_chord_voicing_by_common_tones(chord1: List[int], chord2: List[int]) -> 
 
     chord2_inversion.sort()
     return chord2_inversion
-
-

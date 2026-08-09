@@ -1,3 +1,4 @@
-midiutil==1.2.3
+midiutil==1.2.1
 numpy>=1.19.0
 pytest>=7.0.0
+ruff>=0.8.0

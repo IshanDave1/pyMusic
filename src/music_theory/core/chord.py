@@ -6,7 +6,34 @@ with support for inversions, modal interchange, and custom chord voicings.
 It also includes utilities for arpeggiating chords with custom patterns.
 """
 
-from src.music_theory.core.notes import build_scale_midi, midi_to_note_string, extend_notes_across_octaves
+from dataclasses import dataclass
+from typing import List, Optional
+
+from src.music_theory.core.notes import build_scale_midi, extend_notes_across_octaves
+
+
+@dataclass(frozen=True)
+class ChordEvent:
+    """A chord token plus optional voicing settings for a progression."""
+
+    chord: str
+    inversion: int = 0
+    lower_octave_doubles: Optional[List[int]] = None
+    upper_octave_doubles: Optional[List[int]] = None
+    over_octaves: int = 1
+    openness: float = 0.0
+    rootless: bool = False
+
+    def build_kwargs(self) -> dict:
+        """Return the settings accepted by :func:`build_chord`."""
+        return {
+            "inversion": self.inversion,
+            "lower_octave_doubles": self.lower_octave_doubles,
+            "upper_octave_doubles": self.upper_octave_doubles,
+            "over_octaves": self.over_octaves,
+            "openness": self.openness,
+            "rootless": self.rootless,
+        }
 
 
 class ScaledChordProgression:
@@ -85,9 +112,9 @@ class ScaledChordProgression:
         for i in range(len(degrees)):
             degree = degrees[i]
             chord_type = chord_types[i]
-            if type(degree) == int:
+            if isinstance(degree, int):
                 degree = (degree,0,scale_type )
-            elif type(degree) == tuple and len(degree) == 2:
+            elif isinstance(degree, tuple) and len(degree) == 2:
                 degree = (degree[0], degree[1], scale_type)
             start_note = degree[0] - 1
             inversion = degree[1]

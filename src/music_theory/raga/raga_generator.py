@@ -137,8 +137,6 @@ def melody_to_midi(melody, output_file=None, tempo=180, volume=48, beat_duration
     """
     track = 0
     channel = 0
-    time = 0
-
     midi = MIDIFile(1)
     midi.addTempo(track, 0, tempo)
 
@@ -146,7 +144,6 @@ def melody_to_midi(melody, output_file=None, tempo=180, volume=48, beat_duration
     for note_midi, duration in melody:
         # Convert whole note duration to beats
         duration_in_beats = duration * beat_duration
-        will_pause = random.uniform(0, 1) < 0.8
         midi.addNote(track, channel, note_midi, current_time, duration_in_beats, volume)
         current_time += duration_in_beats
 

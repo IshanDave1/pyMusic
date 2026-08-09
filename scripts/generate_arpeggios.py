@@ -16,19 +16,19 @@ from src.music_theory.midi.arpeggio import generate_arpeggio_progression
 # CONFIGURATION - EDIT THESE VALUES
 # ============================================================================
 
-# Chords: List of (base_note, chord_type) tuples
+# Chords: List of chord tokens (ROOT[:QUALITY]); omitted quality is major.
 CHORDS = [
-    ("D2", "minor_ninth"),
-    ("G2", "dominant_ninth"),
-    ("C2", "major_ninth"),
-    ("A2", "minor_ninth"),
+    "D2:m9",
+    "G2:9",
+    "C2:maj9",
+    "A2:m9",
 ]
 
 # Output file path
 OUTPUT_FILE = "../outputs/my_arpeggios.mid"
 
 # Tempo in BPM
-TEMPO = 400
+TEMPO = 300
 
 # Volume (0-127)
 VOLUME = 60
@@ -46,7 +46,7 @@ FINGER_PATTERN = None
 # ============================================================================
 
 if __name__ == "__main__":
-    print(f"Generating arpeggio progression...")
+    print("Generating arpeggio progression...")
     print(f"  Chords: {CHORDS}")
     print(f"  Tempo: {TEMPO} BPM")
     print(f"  Volume: {VOLUME}")

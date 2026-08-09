@@ -11,78 +11,111 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.music_theory.midi.compose import compose_chord_progression
+from src.music_theory.core.chord import ChordEvent
 
 # ============================================================================
 # CONFIGURATION - EDIT THESE VALUES
 # ============================================================================
 
-# Chords: List of (base_note, chord_type) tuples with optional inversion/voicing
-# Supports multiple formats:
-#   ("Gs3", "minor")                    - simple
-#   ("Gs3", "minor", 1)                 - with inversion
-#   ("Gs3", "minor", {"inversion": 1})  - with voicing options (dict)
-#   ("Gs3", "minor", 1, {"openness": 0.3})  - mixed: inversion + voicing dict
-
-
 # Output file path
 OUTPUT_FILE = "../outputs/my_chords.mid"
 
 # Tempo in BPM
-TEMPO = 80
+TEMPO = 120
 
 # Volume (0-127)
-VOLUME = 70
+VOLUME = 50
 
-# Enable smooth voicing (minimal note movement between chords)
+# Enable smooth voicing (minimal note movement between chords and across sections)
 SMOOTH_VOICING = True
 
-SECTIONS = []
-CHORDS = [
-    ("C", "major_ninth"),     # Approximation of G/C (closest in your library)
-    ("B", "minor_seventh"),   # D/B (same notes)
-    ("A", "major"),
-    ("A", "sus4"),
-    ("A", "major"),
+# ============================================================================
+# SECTIONS - Define chord progressions with their durations, patterns, and loops
+# ============================================================================
+# Chord format: "ROOT[:QUALITY]"; omitted quality means major.
+# Use ChordEvent for per-chord voicing options.
+
+SECTIONS = [
+(
+    [
+        "A",
+        "Fs:m",
+        "Gs:sus4",
+    ],
+    [4, 4, 4],
+    [2, 2, 1, 2, 2, 1, 2, 4],
+    2,
+),
+
+
+(
+    [
+        "Ds:m",
+        "B",
+        "Cs",
+        "Fs",
+        "Ds:m",
+        "B",
+        "Cs",
+        "Fs",
+        "Ds:m",
+        "B",
+        "Cs",
+        "Fs",
+        "Ds:m",
+        "B",
+        "Cs",
+        "Cs:sus4",
+    ],
+    [4] * 16,
+    [1],
+    1,
+),
 ]
 
-# Duration of each chord in quarter notes
-CHORD_DURATIONS = [4, 4,4,2,2]
+DOUBLED = {
+    "lower_octave_doubles": [0, 1, 2]
+}
 
-# Pattern for how many times to play the entire chord during its duration
-PATTERN = [[1,1],[1,1],[1,1],[1],[1]]
+for section_idx, (chords, durations, patterns, loops) in enumerate(SECTIONS):
+    new_chords = []
+    for chord in chords:
+        if isinstance(chord, ChordEvent):
+            new_chords.append(ChordEvent(
+                chord=chord.chord,
+                inversion=chord.inversion,
+                lower_octave_doubles=DOUBLED["lower_octave_doubles"],
+                upper_octave_doubles=chord.upper_octave_doubles,
+                over_octaves=chord.over_octaves,
+                openness=chord.openness,
+                rootless=chord.rootless,
+            ))
+        else:
+            new_chords.append(ChordEvent(chord=chord, **DOUBLED))
 
-# Number of times to loop the entire chord progression
-LOOP_COUNT = 3
-SECTIONS.append((CHORDS,CHORD_DURATIONS,PATTERN,LOOP_COUNT))
-
-print(SECTIONS)
+    SECTIONS[section_idx] = (new_chords, durations, patterns, loops)
 
 
-
-# ============================================================================
-# GENERATE
-# ============================================================================
 
 if __name__ == "__main__":
-    print(f"Generating chord progression...")
-    print(f"  Chords: {CHORDS}")
+    print(f"Generating {len(SECTIONS)} chord progression section(s)...")
     print(f"  Tempo: {TEMPO} BPM")
     print(f"  Volume: {VOLUME}")
-    print(f"  Chord durations: {CHORD_DURATIONS} quarter notes")
-    if PATTERN:
-        print(f"  Pattern: {PATTERN}")
-    print(f"  Loops: {LOOP_COUNT}")
     print(f"  Smooth voicing: {SMOOTH_VOICING}")
     
+    for i, section in enumerate(SECTIONS, 1):
+        chords, chord_durations, pattern, loop_count = section
+        print(f"\n  Section {i}:")
+        print(f"    Chords: {len(chords)} chords")
+        print(f"    Durations: {chord_durations}")
+        print(f"    Loops: {loop_count}")
+    
     compose_chord_progression(
-        CHORDS,
+        SECTIONS,
         output_file=OUTPUT_FILE,
         tempo=TEMPO,
         volume=VOLUME,
-        chord_durations=CHORD_DURATIONS,
-        patterns=PATTERN,
-        loop_count=LOOP_COUNT,
-        smooth_voicing=SMOOTH_VOICING,
+        smooth_voicing=True,
         verbose=True,
     )
     

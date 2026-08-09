@@ -62,7 +62,7 @@ if __name__ == "__main__":
     if SEED is not None:
         random.seed(SEED)
     
-    print(f"Generating guitar synthesis...")
+    print("Generating guitar synthesis...")
     print(f"  Chords: {len(GUITAR_CHORDS)}")
     print(f"  Tempo: {TEMPO} BPM")
     print(f"  Volume: {VOLUME}")

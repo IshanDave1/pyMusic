@@ -39,40 +39,108 @@ interval_half_steps = {
 }
 
 chords = {
-    'major': ['unison', 'major_third', 'perfect_fifth'],
-    'minor': ['unison', 'minor_third', 'perfect_fifth'],
-    'diminished': ['unison', 'minor_third', 'tritone'],
-    'augmented': ['unison', 'major_third', 'minor_sixth'],
+    # Triads
+    'maj': ['unison', 'major_third', 'perfect_fifth'],
+    'm': ['unison', 'minor_third', 'perfect_fifth'],
+    'dim': ['unison', 'minor_third', 'tritone'],
+    'aug': ['unison', 'major_third', 'minor_sixth'],
+
+    # Suspended
     'sus2': ['unison', 'major_second', 'perfect_fifth'],
     'sus4': ['unison', 'perfect_fourth', 'perfect_fifth'],
-    'major_seventh': ['unison', 'major_third', 'perfect_fifth', 'major_seventh'],
-    'minor_seventh': ['unison', 'minor_third', 'perfect_fifth', 'minor_seventh'],
-    'minor_major_seventh': ['unison', 'minor_third', 'perfect_fifth', 'major_seventh'],
-    'dominant_seventh': ['unison', 'major_third', 'perfect_fifth', 'minor_seventh'],
-    'diminished_seventh': ['unison', 'minor_third', 'tritone', 'major_sixth'],
-    'half_diminished_seventh': ['unison', 'minor_third', 'tritone', 'minor_seventh'],
-    'augmented_major_seventh': ['unison', 'major_third', 'minor_sixth', 'major_seventh'],
-    'augmented_minor_seventh': ['unison', 'major_third', 'minor_sixth', 'minor_seventh'],
-    'major_seventh_flat_five': ['unison', 'major_third', 'tritone', 'major_seventh'],
-    'minor_seventh_flat_five': ['unison', 'minor_third', 'tritone', 'minor_seventh'],
-    'major_seventh_sharp_five': ['unison', 'major_third', 'minor_sixth', 'major_seventh'],
-    'minor_seventh_sharp_five': ['unison', 'minor_third', 'minor_sixth', 'major_seventh'],
-    'dominant_ninth': ['unison', 'major_third', 'perfect_fifth', 'minor_seventh', 'major_ninth'],
-    'major_ninth': ['unison', 'major_third', 'perfect_fifth', 'major_seventh', 'major_ninth'],
-    'minor_ninth': ['unison', 'minor_third', 'perfect_fifth', 'minor_seventh', 'major_ninth'],
-    'dominant_thirteenth': ['unison', 'major_third', 'perfect_fifth', 'minor_seventh', 'major_ninth',
-                            'major_thirteenth'],
-    'major_thirteenth': ['unison', 'major_third', 'perfect_fifth', 'major_seventh', 'major_ninth', 'major_thirteenth'],
-    # The major eleventh is often omitted because it clashes with the major third
-    'minor_thirteenth': ['unison', 'minor_third', 'perfect_fifth', 'minor_seventh', 'major_ninth', 'major_thirteenth'],
-    # The major eleventh is often omitted because it clashes with the major third
-    'minor_eleventh': ['unison', 'minor_third', 'perfect_fifth', 'minor_seventh', 'minor_eleventh'],
-    'major_eleventh': ['unison', 'major_third', 'perfect_fifth', 'major_seventh', 'major_eleventh'],
-    'sus9': ['unison', 'major_second', 'perfect_fifth', 'major_ninth'],
-    'add9': ['unison', 'major_second', 'major_third', 'perfect_fifth', 'major_ninth'],
-    '6/9': ['unison', 'major_second', 'major_third', 'perfect_fifth', 'major_sixth', 'major_ninth'],
-    'minor_sixth': ['unison', 'minor_third', 'perfect_fifth', 'major_sixth'],
-    'major_sixth': ['unison', 'major_third', 'perfect_fifth', 'major_sixth']
+
+    # Sixths
+    '6': ['unison', 'major_third', 'perfect_fifth', 'major_sixth'],
+    'm6': ['unison', 'minor_third', 'perfect_fifth', 'major_sixth'],
+    '6/9': [
+        'unison', 'major_second', 'major_third',
+        'perfect_fifth', 'major_sixth', 'major_ninth'
+    ],
+
+    # Sevenths
+    '7': ['unison', 'major_third', 'perfect_fifth', 'minor_seventh'],
+    'maj7': ['unison', 'major_third', 'perfect_fifth', 'major_seventh'],
+    'm7': ['unison', 'minor_third', 'perfect_fifth', 'minor_seventh'],
+    'mMaj7': ['unison', 'minor_third', 'perfect_fifth', 'major_seventh'],
+    'dim7': ['unison', 'minor_third', 'tritone', 'major_sixth'],
+    'm7b5': ['unison', 'minor_third', 'tritone', 'minor_seventh'],
+
+    # Altered sevenths
+    '7b5': ['unison', 'major_third', 'tritone', 'minor_seventh'],
+    '7#5': ['unison', 'major_third', 'minor_sixth', 'minor_seventh'],
+    '7b9': [
+        'unison', 'major_third', 'perfect_fifth',
+        'minor_seventh', 'minor_ninth'
+    ],
+    '7#9': [
+        'unison', 'major_third', 'perfect_fifth',
+        'minor_seventh', 'minor_third'
+    ],
+
+    'maj7b5': ['unison', 'major_third', 'tritone', 'major_seventh'],
+    'maj7#5': ['unison', 'major_third', 'minor_sixth', 'major_seventh'],
+    'm7#5': ['unison', 'minor_third', 'minor_sixth', 'minor_seventh'],
+
+    # Suspended sevenths
+    '7sus2': ['unison', 'major_second', 'perfect_fifth', 'minor_seventh'],
+    '7sus4': ['unison', 'perfect_fourth', 'perfect_fifth', 'minor_seventh'],
+
+    # Ninths
+    'add9': [
+        'unison', 'major_second', 'major_third',
+        'perfect_fifth', 'major_ninth'
+    ],
+    '9': [
+        'unison', 'major_third', 'perfect_fifth',
+        'minor_seventh', 'major_ninth'
+    ],
+    'maj9': [
+        'unison', 'major_third', 'perfect_fifth',
+        'major_seventh', 'major_ninth'
+    ],
+    'm9': [
+        'unison', 'minor_third', 'perfect_fifth',
+        'minor_seventh', 'major_ninth'
+    ],
+    'mMaj9': [
+        'unison', 'minor_third', 'perfect_fifth',
+        'major_seventh', 'major_ninth'
+    ],
+    'sus9': [
+        'unison', 'major_second', 'perfect_fifth', 'major_ninth'
+    ],
+    '9sus4': [
+        'unison', 'perfect_fourth', 'perfect_fifth',
+        'minor_seventh', 'major_ninth'
+    ],
+
+    # Elevenths
+    'm11': [
+        'unison', 'minor_third', 'perfect_fifth',
+        'minor_seventh', 'major_ninth', 'minor_eleventh'
+    ],
+    'maj11': [
+        'unison', 'major_third', 'perfect_fifth',
+        'major_seventh', 'major_ninth', 'major_eleventh'
+    ],
+    '11': [
+        'unison', 'major_third', 'perfect_fifth',
+        'minor_seventh', 'major_ninth', 'major_eleventh'
+    ],
+
+    # Thirteenths
+    'm13': [
+        'unison', 'minor_third', 'perfect_fifth',
+        'minor_seventh', 'major_ninth', 'major_thirteenth'
+    ],
+    'maj13': [
+        'unison', 'major_third', 'perfect_fifth',
+        'major_seventh', 'major_ninth', 'major_thirteenth'
+    ],
+    '13': [
+        'unison', 'major_third', 'perfect_fifth',
+        'minor_seventh', 'major_ninth', 'major_thirteenth'
+    ],
 }
 
 min_note = 0

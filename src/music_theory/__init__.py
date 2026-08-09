@@ -7,7 +7,9 @@ from src.music_theory.core.notes import (
     midi_to_note_string,
     build_scale_midi,
     build_chord,
+    parse_chord_token,
 )
+from src.music_theory.core.chord import ChordEvent
 
 __all__ = [
     "notes",
@@ -19,4 +21,6 @@ __all__ = [
     "midi_to_note_string",
     "build_scale_midi",
     "build_chord",
+    "parse_chord_token",
+    "ChordEvent",
 ]

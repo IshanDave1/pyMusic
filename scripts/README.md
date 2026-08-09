@@ -42,11 +42,11 @@ Compose chord progressions with smooth voice leading.
 **Usage:**
 ```bash
 ./compose_chord_progression.py [OPTIONS] CHORD [CHORD ...]
-python scripts/compose_chord_progression.py Gs3:minor E3:major G3:major B3:major
+python scripts/compose_chord_progression.py Gs3:m E3:maj G3:maj B3:maj
 ```
 
 **Arguments:**
-- `CHORDS`: Chord sequence as `Note:ChordType` (e.g., `C4:major`, `F3:minor_seventh`)
+- `CHORDS`: Chord sequence as `Note:ChordType` (e.g., `C4:maj`, `F3:m7`)
 
 **Options:**
 - `-o, --output`: Output MIDI file path (default: outputs/chord_progression.mid)
@@ -57,17 +57,17 @@ python scripts/compose_chord_progression.py Gs3:minor E3:major G3:major B3:major
 **Examples:**
 ```bash
 # Compose a simple progression
-python scripts/compose_chord_progression.py Gs3:minor E3:major G3:major B3:major
+python scripts/compose_chord_progression.py Gs3:m E3:maj G3:maj B3:maj
 
 # Custom output and tempo
 python scripts/compose_chord_progression.py \
   -o my_progression.mid --tempo 140 --volume 60 \
-  Gs3:minor E3:major G3:major B3:major
+  Gs3:m E3:maj G3:maj B3:maj
 
 # Extended progression with sevenths
 python scripts/compose_chord_progression.py \
-  E3:major_seventh E3:major G3:major B3:major \
-  E3:major_seventh E3:major G3:major B3:major
+  E3:maj7 E3:maj G3:maj B3:maj \
+  E3:maj7 E3:maj G3:maj B3:maj
 ```
 
 ---
@@ -79,7 +79,7 @@ Generate arpeggiated chord progressions with finger patterns.
 **Usage:**
 ```bash
 ./generate_arpeggio_progression.py [OPTIONS] CHORD [CHORD ...]
-python scripts/generate_arpeggio_progression.py D2:minor_ninth G2:dominant_ninth C2:major_ninth A2:minor_ninth
+python scripts/generate_arpeggio_progression.py D2:m9 G2:9 C2:maj9 A2:m9
 ```
 
 **Arguments:**
@@ -96,12 +96,12 @@ python scripts/generate_arpeggio_progression.py D2:minor_ninth G2:dominant_ninth
 ```bash
 # Generate arpeggios with default pattern
 python scripts/generate_arpeggio_progression.py \
-  D2:minor_ninth G2:dominant_ninth C2:major_ninth A2:minor_ninth
+  D2:m9 G2:9 C2:maj9 A2:m9
 
 # Custom finger pattern
 python scripts/generate_arpeggio_progression.py \
   --pattern 0 1 2 3 4 5 \
-  C4:major G3:major F3:major
+  C4:maj G3:maj F3:maj
 ```
 
 ---
@@ -200,7 +200,7 @@ Create the directory if it doesn't exist: `mkdir -p outputs`
 major, minor, harmonic_minor, dorian, phrygian, lydian, mixolydian, aeolian, locrian, major_pentatonic, minor_pentatonic, major_blues, minor_blues
 
 ### Chords
-major, minor, diminished, augmented, sus2, sus4, major_seventh, minor_seventh, dominant_seventh, diminished_seventh, half_diminished_seventh, augmented_major_seventh, augmented_minor_seventh, major_seventh_flat_five, minor_seventh_flat_five, major_seventh_sharp_five, minor_seventh_sharp_five, dominant_ninth, major_ninth, minor_ninth, dominant_thirteenth, major_thirteenth, minor_thirteenth, minor_eleventh, major_eleventh, sus9, add9, 6/9, minor_sixth, major_sixth
+maj, m, dim, aug, sus2, sus4, 6, m6, 6/9, 7, maj7, m7, mMaj7, dim7, m7b5, 7b5, 7#5, 7b9, 7#9, maj7b5, maj7#5, m7#5, 7sus2, 7sus4, add9, 9, maj9, m9, mMaj9, sus9, 9sus4, m11, maj11, 11, m13, maj13, 13
 
 ## Tips
 

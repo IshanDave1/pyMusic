@@ -6,8 +6,9 @@ Generates fast arpeggiated chord progressions with customizable patterns and spa
 
 from pathlib import Path
 from midiutil import MIDIFile
-from src.music_theory.core.notes import note_string_to_midi
+from src.music_theory.core.notes import build_chord, note_string_to_midi, parse_chord_token
 from src.music_theory.core.chord import build_arpeggio_from_chord
+from src.music_theory.core.chord import ChordEvent
 from src.music_theory.core.constants import chords as CHORD_DEFINITIONS, interval_half_steps
 
 
@@ -26,8 +27,8 @@ def generate_arpeggio_progression(chords, output_file=None, tempo=400, volume=60
     Generate fast arpeggiated chords.
     
     Args:
-        chords: List of (base_note, chord_type) tuples
-                e.g., [("D2", "minor_ninth"), ("G2", "dominant_ninth"), ...]
+        chords: List of chord-token strings or ChordEvent instances
+                e.g., ["D2:m9", "G2:9", ...]
         output_file: Path to save MIDI file. If None, returns MIDIFile object.
         tempo: Tempo in BPM (default 400)
         volume: MIDI volume 0-127 (default 60)
@@ -54,11 +55,18 @@ def generate_arpeggio_progression(chords, output_file=None, tempo=400, volume=60
     current_time = 0
     beat_duration = 0.5
     
-    for base_note_str, chord_type_str in chords:
-        base_midi = note_string_to_midi(base_note_str)
-        intervals = _get_chord_intervals(chord_type_str)
-        
-        chord = [base_midi + interval for interval in intervals]
+    for chord_item in chords:
+        if isinstance(chord_item, ChordEvent):
+            chord = build_chord(chord_item.chord, **chord_item.build_kwargs())
+        elif isinstance(chord_item, str):
+            base_note_str, chord_type_str = parse_chord_token(chord_item)
+            base_midi = note_string_to_midi(base_note_str)
+            intervals = _get_chord_intervals(chord_type_str)
+            chord = [base_midi + interval for interval in intervals]
+        else:
+            raise TypeError(
+                "Arpeggio entries must be chord-token strings or ChordEvent instances."
+            )
         arpeggio_notes = build_arpeggio_from_chord(chord, arpeggio_length, finger_pattern)
         
         for midi_note in arpeggio_notes:

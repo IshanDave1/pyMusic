@@ -36,7 +36,7 @@ BEAT_DURATION = 4
 # ============================================================================
 
 if __name__ == "__main__":
-    print(f"Generating raga melody...")
+    print("Generating raga melody...")
     print(f"  Length: {LENGTH} notes")
     print(f"  Tempo: {TEMPO} BPM")
     print(f"  Volume: {VOLUME}")
