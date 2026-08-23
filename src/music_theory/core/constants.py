@@ -17,118 +17,90 @@ scales = {
 }
 
 interval_half_steps = {
-    "unison": 0,
-    "minor_second": 1,
-    "major_second": 2,
-    "minor_third": 3,
-    "major_third": 4,
-    "perfect_fourth": 5,
-    "tritone": 6,
-    "perfect_fifth": 7,
-    "minor_sixth": 8,
-    "major_sixth": 9,
-    "minor_seventh": 10,
-    "major_seventh": 11,
-    "minor_ninth": 13,
-    "major_ninth": 14,
-    "minor_eleventh": 16,
-    "major_eleventh": 17,
-    "minor_thirteenth": 22,
-    "major_thirteenth": 23,
-    "octave": 12,
+    "P1": 0,
+    "m2": 1,
+    "M2": 2,
+    "m3": 3,
+    "M3": 4,
+    "P4": 5,
+    "d5": 6,
+    "A4": 6,
+    "P5": 7,
+    "A5": 8,
+    "m6": 8,
+    "M6": 9,
+    "d7": 9,
+    "m7": 10,
+    "M7": 11,
+    "P8": 12,
+    "m9": 13,
+    "M9": 14,
+    "A9": 15,
+    "m10": 15,
+    "M10": 16,
+    "P11": 17,
+    "A11": 18,
+    "P12": 19,
+    "m13": 20,
+    "M13": 21,
 }
 
 chords = {
-    # Triads
-    "maj": ["unison", "major_third", "perfect_fifth"],
-    "m": ["unison", "minor_third", "perfect_fifth"],
-    "dim": ["unison", "minor_third", "tritone"],
-    "aug": ["unison", "major_third", "minor_sixth"],
-    # Suspended
-    "sus2": ["unison", "major_second", "perfect_fifth"],
-    "sus4": ["unison", "perfect_fourth", "perfect_fifth"],
-    # Sixths
-    "6": ["unison", "major_third", "perfect_fifth", "major_sixth"],
-    "m6": ["unison", "minor_third", "perfect_fifth", "major_sixth"],
-    "6/9": ["unison", "major_second", "major_third", "perfect_fifth", "major_sixth", "major_ninth"],
-    # Sevenths
-    "7": ["unison", "major_third", "perfect_fifth", "minor_seventh"],
-    "maj7": ["unison", "major_third", "perfect_fifth", "major_seventh"],
-    "m7": ["unison", "minor_third", "perfect_fifth", "minor_seventh"],
-    "mMaj7": ["unison", "minor_third", "perfect_fifth", "major_seventh"],
-    "dim7": ["unison", "minor_third", "tritone", "major_sixth"],
-    "m7b5": ["unison", "minor_third", "tritone", "minor_seventh"],
-    # Altered sevenths
-    "7b5": ["unison", "major_third", "tritone", "minor_seventh"],
-    "7#5": ["unison", "major_third", "minor_sixth", "minor_seventh"],
-    "7b9": ["unison", "major_third", "perfect_fifth", "minor_seventh", "minor_ninth"],
-    "7#9": ["unison", "major_third", "perfect_fifth", "minor_seventh", "minor_third"],
-    "maj7b5": ["unison", "major_third", "tritone", "major_seventh"],
-    "maj7#5": ["unison", "major_third", "minor_sixth", "major_seventh"],
-    "m7#5": ["unison", "minor_third", "minor_sixth", "minor_seventh"],
-    # Suspended sevenths
-    "7sus2": ["unison", "major_second", "perfect_fifth", "minor_seventh"],
-    "7sus4": ["unison", "perfect_fourth", "perfect_fifth", "minor_seventh"],
-    # Ninths
-    "add9": ["unison", "major_second", "major_third", "perfect_fifth", "major_ninth"],
-    "9": ["unison", "major_third", "perfect_fifth", "minor_seventh", "major_ninth"],
-    "maj9": ["unison", "major_third", "perfect_fifth", "major_seventh", "major_ninth"],
-    "m9": ["unison", "minor_third", "perfect_fifth", "minor_seventh", "major_ninth"],
-    "mMaj9": ["unison", "minor_third", "perfect_fifth", "major_seventh", "major_ninth"],
-    "sus9": ["unison", "major_second", "perfect_fifth", "major_ninth"],
-    "9sus4": ["unison", "perfect_fourth", "perfect_fifth", "minor_seventh", "major_ninth"],
-    # Elevenths
-    "m11": [
-        "unison",
-        "minor_third",
-        "perfect_fifth",
-        "minor_seventh",
-        "major_ninth",
-        "minor_eleventh",
-    ],
-    "maj11": [
-        "unison",
-        "major_third",
-        "perfect_fifth",
-        "major_seventh",
-        "major_ninth",
-        "major_eleventh",
-    ],
-    "11": [
-        "unison",
-        "major_third",
-        "perfect_fifth",
-        "minor_seventh",
-        "major_ninth",
-        "major_eleventh",
-    ],
-    # Thirteenths
-    "m13": [
-        "unison",
-        "minor_third",
-        "perfect_fifth",
-        "minor_seventh",
-        "major_ninth",
-        "major_thirteenth",
-    ],
-    "maj13": [
-        "unison",
-        "major_third",
-        "perfect_fifth",
-        "major_seventh",
-        "major_ninth",
-        "major_thirteenth",
-    ],
-    "13": [
-        "unison",
-        "major_third",
-        "perfect_fifth",
-        "minor_seventh",
-        "major_ninth",
-        "major_thirteenth",
-    ],
+    "maj": ["P1", "M3", "P5"],
+    "m": ["P1", "m3", "P5"],
+    "dim": ["P1", "m3", "d5"],
+    "aug": ["P1", "M3", "A5"],
+
+    "sus2": ["P1", "M2", "P5"],
+    "sus4": ["P1", "P4", "P5"],
+
+    "6": ["P1", "M3", "P5", "M6"],
+    "m6": ["P1", "m3", "P5", "M6"],
+    "6/9": ["P1", "M3", "P5", "M6", "M9"],
+
+    "7": ["P1", "M3", "P5", "m7"],
+    "maj7": ["P1", "M3", "P5", "M7"],
+    "m7": ["P1", "m3", "P5", "m7"],
+    "mMaj7": ["P1", "m3", "P5", "M7"],
+    "dim7": ["P1", "m3", "d5", "d7"],
+    "m7b5": ["P1", "m3", "d5", "m7"],
+
+    "7b5": ["P1", "M3", "d5", "m7"],
+    "7#5": ["P1", "M3", "A5", "m7"],
+    "7b9": ["P1", "M3", "P5", "m7", "m9"],
+    "7#9": ["P1", "M3", "P5", "m7", "A9"],
+    "maj7b5": ["P1", "M3", "d5", "M7"],
+    "maj7#5": ["P1", "M3", "A5", "M7"],
+    "m7#5": ["P1", "m3", "A5", "m7"],
+
+    "7sus2": ["P1", "M2", "P5", "m7"],
+    "7sus4": ["P1", "P4", "P5", "m7"],
+
+    "add9": ["P1", "M3", "P5", "M9"],
+    "9": ["P1", "M3", "P5", "m7", "M9"],
+    "maj9": ["P1", "M3", "P5", "M7", "M9"],
+    "m9": ["P1", "m3", "P5", "m7", "M9"],
+    "mMaj9": ["P1", "m3", "P5", "M7", "M9"],
+    "sus9": ["P1", "P4", "P5", "M9"],
+    "9sus4": ["P1", "P4", "P5", "m7", "M9"],
+
+    "11": ["P1", "M3", "P5", "m7", "M9", "P11"],
+    "maj11": ["P1", "M3", "P5", "M7", "M9", "P11"],
+    "m11": ["P1", "m3", "P5", "m7", "M9", "P11"],
+
+    "13": ["P1", "M3", "P5", "m7", "M9", "P11", "M13"],
+    "maj13": ["P1", "M3", "P5", "M7", "M9", "P11", "M13"],
+    "m13": ["P1", "m3", "P5", "m7", "M9", "P11", "M13"],
 }
 
+for k, v in list(chords.items()):
+    if "maj" in k:
+        chords[k.replace("maj", "M")] = v
+
+    if "sus" in k:
+        chords[k.replace("sus", "S")] = v
+
+
 min_note = 0
-max_note = 120
+max_note = 128
 middle_octave = 4

@@ -21,6 +21,9 @@ class TestChordTokens(unittest.TestCase):
         self.assertEqual(note_string_to_midi("Cs4"), note_string_to_midi("C#4"))
         self.assertEqual(note_string_to_midi("Db4"), note_string_to_midi("Cs4"))
         self.assertEqual(note_string_to_midi("Cb4"), note_string_to_midi("B3"))
+        self.assertEqual(note_string_to_midi("Cb2"), 35)
+        self.assertEqual(note_string_to_midi("B#0"), 24)
+        self.assertEqual(note_string_to_midi("C-1"), 0)
         self.assertEqual(build_chord("Bb:m7"), build_chord("As:m7"))
 
     def test_invalid_chord_tokens_raise_value_error(self):

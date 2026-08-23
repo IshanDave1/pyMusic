@@ -18,7 +18,7 @@ from src.music_theory.midi.compose import compose_chord_progression
 # ============================================================================
 
 # Output file path
-OUTPUT_FILE = "../outputs/my_chords.mid"
+OUTPUT_FILE = "../outputs/wish_you_were_here.mid"
 
 # Tempo in BPM
 TEMPO = 120
@@ -38,34 +38,17 @@ SMOOTH_VOICING = True
 SECTIONS = [
     (
         [
-            "A",
-            "Fs:m",
-            "Gs:sus4",
+            ChordEvent("D:m9"),
+            ChordEvent("D:m9"),
+            ChordEvent("D:m9"),
+            ChordEvent("As"),
+            ChordEvent("As"),
+            ChordEvent("As"),
+            ChordEvent("A:9sus4"),
+            ChordEvent("A:9sus4"),
+            ChordEvent("A:9sus4"),
         ],
-        [4, 4, 4],
-        [2, 2, 1, 2, 2, 1, 2, 4],
-        2,
-    ),
-    (
-        [
-            "Ds:m",
-            "B",
-            "Cs",
-            "Fs",
-            "Ds:m",
-            "B",
-            "Cs",
-            "Fs",
-            "Ds:m",
-            "B",
-            "Cs",
-            "Fs",
-            "Ds:m",
-            "B",
-            "Cs",
-            "Cs:sus4",
-        ],
-        [4] * 16,
+        [4] * 9,
         [1],
         1,
     ),
@@ -81,11 +64,10 @@ for section_idx, (chords, durations, patterns, loops) in enumerate(SECTIONS):
                 ChordEvent(
                     chord=chord.chord,
                     inversion=chord.inversion,
-                    lower_octave_doubles=DOUBLED["lower_octave_doubles"],
-                    upper_octave_doubles=chord.upper_octave_doubles,
+                    lower_octave_doubles=None,
+                    upper_octave_doubles=None,
                     over_octaves=chord.over_octaves,
                     openness=chord.openness,
-                    rootless=chord.rootless,
                 )
             )
         else:
@@ -112,7 +94,7 @@ if __name__ == "__main__":
         output_file=OUTPUT_FILE,
         tempo=TEMPO,
         volume=VOLUME,
-        smooth_voicing=True,
+        smooth_voicing=SMOOTH_VOICING,
         verbose=True,
     )
 

@@ -22,7 +22,6 @@ class ChordEvent:
     upper_octave_doubles: Optional[Tuple[int, ...]] = None
     over_octaves: int = 1
     openness: float = 0.0
-    rootless: bool = False
 
     def build_kwargs(self) -> dict:
         """Return the settings accepted by :func:`build_chord`."""
@@ -32,7 +31,6 @@ class ChordEvent:
             "upper_octave_doubles": self.upper_octave_doubles,
             "over_octaves": self.over_octaves,
             "openness": self.openness,
-            "rootless": self.rootless,
         }
 
 
@@ -89,7 +87,6 @@ class ScaledChordProgression:
                 Examples:
                 - [1, 3, 5] = triad (root, 3rd, 5th)
                 - [1, 3, 5, 7] = seventh chord
-                - [0, 2, 4, 6] = same as [1, 3, 5, 7] (0-indexed internally)
 
         Returns:
             list[list[int]]: A list of chords, where each chord is a list of
@@ -102,11 +99,11 @@ class ScaledChordProgression:
         """
         if chord_types is None:
             chord_types = [[1, 3, 5] for _ in range(len(degrees))]
-
         chord_types = [list(ct) for ct in chord_types]
         for chord_type in chord_types:
             for note_index in range(len(chord_type)):
                 chord_type[note_index] = chord_type[note_index] - 1
+        print(chord_types)
 
         cp = []
         for i in range(len(degrees)):
@@ -128,8 +125,7 @@ class ScaledChordProgression:
                     inversion : inversion + len(chord_type)
                 ]
             ]
-            cp.append(chord)
-
+        print("progression",cp)
         return cp
 
 

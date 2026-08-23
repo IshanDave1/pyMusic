@@ -28,30 +28,7 @@ from src.music_theory.core.constants import (
     notes,
     scales,
 )
-
-
-def note_to_midi(note: Union[int, str]) -> int:
-    """Convert note to MIDI number if it's a string."""
-    if isinstance(note, str):
-        return note_string_to_midi(note)
-    return note
-
-
-def extend_notes_across_octaves(notes: List[int], octaves: int = 3) -> List[int]:
-    """Extend a list of notes across multiple octaves.
-
-    Args:
-        notes: List of MIDI note numbers.
-        octaves: Number of octaves to span (default 3).
-
-    Returns:
-        Extended list with notes repeated at higher octaves.
-    """
-    result = []
-    for i in range(octaves):
-        result.extend([n + 12 * i for n in notes])
-    return result
-
+pitch_classes = {name: index for index, name in enumerate(notes)}
 
 def note_string_to_midi(note: str) -> int:
     """
@@ -79,24 +56,40 @@ def note_string_to_midi(note: str) -> int:
     if not isinstance(note, str):
         raise ValueError(f"Invalid note {note!r}. Expected a note string.")
 
-    match = re.fullmatch(r"([A-Ga-g])([s#b]?)([0-9]?)", note)
+    match = re.fullmatch(r"([A-Ga-g])([s#b]?)(-?[0-9]+)?", note)
     if match is None:
         raise ValueError(
-            f"Invalid note '{note}'. Notes must use A-G with an optional s, #, or b accidental and optional octave."
+            f"Invalid note '{note}'. Notes must use A-G with an optional s, #, or b accidental and optional signed octave."
         )
 
     letter, accidental, octave = match.groups()
-    pitch_classes = {name: index for index, name in enumerate(notes)}
     pitch_class = pitch_classes[letter.upper()]
-    if accidental:
-        if accidental.lower() == "s" or accidental == "#":
-            pitch_class += 1
-        elif accidental.lower() == "b":
-            pitch_class -= 1
-    octave_number = int(octave) if octave else middle_octave
-    octave_number += pitch_class // 12
-    pitch_class %= 12
-    return pitch_class + (octave_number + 1) * 12
+    accidental_offset = {"s": 1, "#": 1, "b": -1}.get(accidental.lower() if accidental else "", 0)
+    total_semitones = pitch_class + accidental_offset
+    octave_number = int(octave) if octave is not None else middle_octave
+    midi_number = (octave_number + 1) * 12 + total_semitones
+    if midi_number < min_note or midi_number > max_note:
+        raise ValueError(f"Invalid note '{note}'. Resolved MIDI note {midi_number} is out of range.")
+    return midi_number
+
+
+def note_to_midi(note: Union[int, str]) -> int:
+    """Convert note to MIDI number if it's a string."""
+    return note_string_to_midi(note) if isinstance(note, str) else note
+
+
+def extend_notes_across_octaves(notes: List[int], octaves: int = 3) -> List[int]:
+    """Extend a list of notes across multiple octaves.
+
+    Args:
+        notes: List of MIDI note numbers.
+        octaves: Number of octaves to span (default 3).
+
+    Returns:
+        Extended list with notes repeated at higher octaves.
+    """
+    return [note + octave*12 for octave in range(octaves) for note in notes]
+
 
 
 def midi_to_note_string(num: int) -> str:
@@ -119,7 +112,7 @@ def midi_to_note_string(num: int) -> str:
         'C3'
     """
     if num < min_note or num > max_note:
-        raise ValueError(f"num {num} has to be in range 0-100")
+        raise ValueError(f"num {num} has to be in range {min_note}-{max_note}")
     return f"{notes[num % 12]}{num // 12 - 1}"
 
 
@@ -166,6 +159,10 @@ def transpose_to_midi(note: Union[int, str], semitones: int = 12) -> int:
     """
     return note_to_midi(note) + semitones
 
+def next_note(first_note: int, second_note: int) -> int:
+    second_note_next = second_note%12 + (first_note//12)*12
+    return second_note_next if second_note_next > first_note else second_note_next + 12
+
 
 def build_scale_midi(num: Union[int, str], scale_type: str) -> List[int]:
     """
@@ -188,10 +185,11 @@ def build_scale_midi(num: Union[int, str], scale_type: str) -> List[int]:
         >>> build_scale_midi("C4", "minor")
         [60, 62, 63, 65, 67, 68, 70]
     """
-    if scale_type not in scales.keys():
+    if scale_type not in scales:
         raise ValueError(f"not supported scale {scale_type}")
     num = note_to_midi(num)
-    return [num + sum(scales[scale_type][:i]) for i in range(len(scales[scale_type]))]
+    scale_type = scales[scale_type]
+    return [num + sum(scale_type[:i]) for i in range(len(scale_type))]
 
 
 def get_scale_degree(note: Union[int, str], scale_type: str, degree: int) -> int:
@@ -212,6 +210,13 @@ def get_scale_degree(note: Union[int, str], scale_type: str, degree: int) -> int
         >>> get_scale_degree(60, "major", 3)  # The 3rd degree (E)
         64
     """
+    if scale_type not in scales:
+        raise ValueError(f"Unsupported scale type '{scale_type}'.")
+
+    if not 1 <= degree <= len(scales[scale_type]):
+        raise ValueError(
+            f"Scale degree ({degree}) not supported for scale type '{scale_type}'."
+        )
     return build_scale_midi(note, scale_type)[degree - 1]
 
 
@@ -293,6 +298,32 @@ def parse_chord_token(chord: str) -> tuple[str, str]:
     return root, chord_type
 
 
+def _build_chord_from_parts_v2(
+    chord: str,
+    inversion: int = 0,
+    voicing: int = 0,
+    skip_voices: list[int] = None,
+
+) -> List[int]:
+    """Build a chord from already-separated root and quality values."""
+    root,chord_type = parse_chord_token(chord)
+    root = note_to_midi(root)
+
+    if chord_type not in chords:
+        raise ValueError(f"Unsupported chord quality '{chord_type}'.")
+    if inversion < 0 or inversion >= len(chords[chord_type]):
+        raise ValueError(f"Invalid inversion '{inversion}'")
+
+    base_note = root + interval_half_steps[inversion]
+    chord_notes = [base_note]
+    num_notes = len(chords[chord_type])
+    for i in range(1,num_notes) :
+        next_note_index = (i + inversion)%num_notes
+        next_note_without_register_correction = root + interval_half_steps[next_note_index]
+        next_note_correct_register = next_note(chord_notes[i-1], next_note_without_register_correction)
+        chord_notes.append(next_note_correct_register)
+    return chord_notes
+
 def _build_chord_from_parts(
     base_note: Union[int, str],
     chord_type: str,
@@ -301,7 +332,6 @@ def _build_chord_from_parts(
     upper_octave_doubles: Optional[Sequence[int]] = None,
     over_octaves=1,
     openness: float = 0.0,
-    rootless=False,
 ) -> List[int]:
     """Build a chord from already-separated root and quality values."""
     if chord_type not in chords:
@@ -344,7 +374,6 @@ def build_chord(
     upper_octave_doubles: Optional[Sequence[int]] = None,
     over_octaves=1,
     openness: float = 0.0,
-    rootless=False,
 ) -> List[int]:
     """
     Generate a chord with advanced voicing options.
@@ -380,16 +409,8 @@ def build_chord(
         [60, 64, 67, 71]
     """
     base_note, chord_type = parse_chord_token(chord)
-    return _build_chord_from_parts(
-        base_note,
-        chord_type,
-        inversion,
-        lower_octave_doubles,
-        upper_octave_doubles,
-        over_octaves,
-        openness,
-        rootless,
-    )
+    return _build_chord_from_parts(base_note, chord_type, inversion, lower_octave_doubles, upper_octave_doubles,
+                                   over_octaves, openness)
 
 
 def generate_chord_voicings(
@@ -530,7 +551,7 @@ def identify_chords_from_notes(notes_as_list: Set[int]) -> Dict[str, List[int]]:
 
     Example:
         >>> identify_chords_from_notes({60, 64, 67})
-        {'C4:maj': [60, 64, 67]}
+        {'C4:maj': [60, 64, 67], 'C4:M': [60, 64, 67]}
     """
 
     def is_in_set(chord_tones, note_set) -> bool:
