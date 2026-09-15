@@ -1,0 +1,225 @@
+"""
+Chord module for generating chord progressions and arpeggios.
+
+This module provides tools for creating chord progressions based on scale degrees,
+with support for inversions, modal interchange, and custom chord voicings.
+It also includes utilities for arpeggiating chords with custom patterns.
+"""
+
+from dataclasses import dataclass
+from typing import Optional, Tuple
+
+from src.music_theory.core.notes import build_scale_midi, extend_notes_across_octaves, _build_chord_from_parts,midi_to_note_string
+
+
+@dataclass(frozen=True)
+class ChordEvent:
+    """A chord token plus optional voicing settings for a progression."""
+
+    chord: str
+    inversion: int = 0
+    lower_octave_doubles: Optional[Tuple[int, ...]] = None
+    upper_octave_doubles: Optional[Tuple[int, ...]] = None
+    over_octaves: int = 1
+    openness: float = 0.0
+
+    def build_kwargs(self) -> dict:
+        """Return the settings accepted by :func:`build_chord`."""
+        return {
+            "inversion": self.inversion,
+            "lower_octave_doubles": self.lower_octave_doubles,
+            "upper_octave_doubles": self.upper_octave_doubles,
+            "over_octaves": self.over_octaves,
+            "openness": self.openness,
+        }
+
+
+def parse_progression(cp_string,default_scale):
+    chord_strings = cp_string.split("-")
+    cp = []
+    for chord_string in chord_strings:
+        alter = 0
+        if "b" in chord_string[0] or "s" in chord_string[0]:
+            if chord_string[0] == "b" :
+                alter = -1
+            else :
+                alter = 1
+            chord_string = chord_string[1:]
+        if ":" not in chord_string:
+            root,mode = int(chord_string),default_scale
+            chord_info = {"mode" : default_scale}
+        elif "::" in chord_string:
+            root,mode = chord_string.split("::")
+            root = int(root)
+            chord_info = {"mode": mode}
+        else :
+            root,chord = chord_string.split(":")
+            root = int(root)
+            chord_info = {"chord": chord}
+
+        chord_info["root"] = root-1
+        chord_info["alter"] = alter
+
+        cp.append(chord_info)
+
+    return cp
+
+cps = "1-b3-6-b6"
+
+
+def gp(base_note,cp_string, scale_type="major", chord_type=None):
+    if chord_type is None:
+        chord_type = [1, 3, 5]
+    chord_type = [x - 1 for x in chord_type]
+    cp = []
+    chords = parse_progression(cp_string,scale_type)
+    for chord_info in chords:
+        if "mode" in chord_info:
+            relative_root,mode,alter = chord_info["root"],chord_info["mode"],chord_info["alter"]
+            scale = build_scale_midi(base_note, mode)
+            scale = extend_notes_across_octaves(scale)
+            # print(scale)
+            print(relative_root,mode,alter)
+            chord_notes_midi = [scale[x + relative_root] for x in chord_type]
+
+
+        else :
+            relative_root,chord,alter = chord_info["root"],chord_info["chord"],chord_info["alter"]
+            print(relative_root,chord,alter)
+            scale = build_scale_midi(base_note, scale_type)
+            chord_notes_midi = _build_chord_from_parts(scale[relative_root],chord)
+
+        chord_notes_midi = [x+alter for x in chord_notes_midi]
+        print(chord_notes_midi)
+        print([midi_to_note_string(x) for x in chord_notes_midi])
+
+gp(60,cps,chord_type = [1,3,5,7])
+
+
+class ScaledChordProgression:
+    """
+    A class for generating chord progressions within a given scale.
+
+    This class allows creation of chord progressions by specifying scale degrees,
+    chord types (voicings), and supports inversions and modal interchange (borrowing
+    chords from parallel scales).
+
+    Attributes:
+        base_note (int): The root note of the scale as a MIDI note number.
+                         Default is 60 (middle C).
+
+    Example:
+        >>> scp = ScaledChordProgression(48)  # C3 as base
+        >>> cp = scp.generate_progression([1, 4, 5, 1], "major")  # I-IV-V-I progression
+    """
+
+    def __init__(self, base_note=60):
+        """
+        Initialize a ScaledChordProgression with a base note.
+
+        Args:
+            base_note (int): The root note of the scale as a MIDI note number.
+                             Default is 60 (middle C). Common values:
+                             - 48 = C3
+                             - 60 = C4 (middle C)
+                             - 72 = C5 (one octave above middle C)
+        """
+        self.base_note = base_note
+
+
+    def generate_progression(self, degrees, scale_type="major", chord_types=None):
+        """
+        Generate a chord progression based on scale degrees.
+
+        Creates chords from the specified scale degrees with optional inversions,
+        custom voicings, and modal interchange.
+
+        Args:
+            degrees (list): A list of scale degrees. Each element can be:
+                - int: A scale degree (1-based). E.g., 1 for tonic, 5 for dominant.
+                - tuple(int, int): (degree, inversion). Inversion shifts which chord
+                  tone is in the bass. E.g., (4, 1) is the IV chord, first inversion.
+                - tuple(int, int, str): (degree, inversion, mode). Borrows a chord
+                  from a parallel scale. E.g., (4, 0, "minor") borrows iv from
+                  the parallel minor.
+            scale_type (str): The scale type to use. Default is "major".
+                              Must be a valid scale type recognized by build_scale_midi().
+            chord_types (list[list[int]] | None): Optional list of chord voicings,
+                one per degree. Each voicing is a list of 1-based scale intervals.
+                Default is [[1, 3, 5], ...] (triads) for each degree.
+                Examples:
+                - [1, 3, 5] = triad (root, 3rd, 5th)
+                - [1, 3, 5, 7] = seventh chord
+
+        Returns:
+            list[list[int]]: A list of chords, where each chord is a list of
+                             MIDI note numbers.
+
+        Example:
+            >>> scp = ScaledChordProgression(48)
+            >>> # I-IV(1st inv)-vi-V progression with 7th chords
+            >>> cp = scp.generate_progression([1, (4, 1), 6, 5], "major", [[1,3,5,7]]*4)
+        """
+        if chord_types is None:
+            chord_types = [[1, 3, 5] for _ in range(len(degrees))]
+        chord_types = [list(ct) for ct in chord_types]
+        for chord_type in chord_types:
+            for note_index in range(len(chord_type)):
+                chord_type[note_index] = chord_type[note_index] - 1
+        cp = []
+        for i in range(len(degrees)):
+            degree = degrees[i]
+            chord_type = chord_types[i]
+            if isinstance(degree, int):
+                degree = (degree, 0, scale_type)
+            elif isinstance(degree, tuple) and len(degree) == 2:
+                degree = (degree[0], degree[1], scale_type)
+            start_note = degree[0] - 1
+            inversion = degree[1]
+            mode = degree[2]
+            parallel_scale_notes = extend_notes_across_octaves(
+                build_scale_midi(self.base_note, mode), 5
+            )
+            chord = [
+                parallel_scale_notes[start_note + x]
+                for x in (chord_type + [y + 7 for y in chord_type])[
+                    inversion : inversion + len(chord_type)
+                ]
+            ]
+        return cp
+
+
+def build_arpeggio_from_chord(chord, length, pattern=None):
+    """
+    Generate an arpeggiated sequence from a chord.
+
+    Takes a chord and creates a sequence of individual notes based on a pattern,
+    spanning multiple octaves.
+
+    Args:
+        chord (list[int]): A list of MIDI note numbers representing the chord.
+        length (int): The desired length of the output arpeggio sequence.
+        pattern (list[int] | None): Optional list of 1 based indices specifying the order
+            to play chord tones. Indices refer to positions in the extended chord
+            (original + 1 octave up + 2 octaves up). If None, defaults to sequential
+            order [0, 1, 2, ...] through all chord tones.
+
+    Returns:
+        list[int]: A list of MIDI note numbers representing the arpeggiated sequence.
+
+    Raises:
+        AssertionError: If any pattern index exceeds the extended chord length.
+
+    Example:
+        >>> chord = [60, 64, 67]  # C major triad
+        >>> arp = build_arpeggio_from_chord(chord, 16, [1, 2, 4, 3, 1, 2, 3, 4])
+        >>> # Returns a 16-note arpeggio following the specified pattern
+    """
+    chord = extend_notes_across_octaves(chord, 10)
+    chord.sort()
+    if pattern is None:
+        pattern = list(range(length))
+    else:
+        pattern = [x - 1 for x in pattern]
+    pattern *= 5
+    return [chord[pattern[i]] for i in range(length)]
