@@ -58,3 +58,39 @@ Thumbs.db
 # Project specific
 .claude/
 .cursor/
+
+
+  # Virtual environments
+  .venv/
+  venv/
+  env/
+
+  # Python cache
+  __pycache__/
+  *.py[cod]
+  *$py.class
+
+  # Testing and coverage
+  .pytest_cache/
+  .coverage
+  htmlcov/
+
+  # Build/package files
+  build/
+  dist/
+  *.egg-info/
+
+  # Generated music/output files
+  outputs/
+  *.mid
+  *.wav
+  *.mp3
+
+  # IDE/editor files
+  .vscode/
+  .idea/
+  .DS_Store
+
+  # Environment/secrets
+  .env
+  .env.*
